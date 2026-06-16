@@ -1,0 +1,8 @@
+global:
+  scrape_interval: 5s  # Aggressive scraping interval for local testing development
+
+scrape_configs:
+  - job_name: "recommendation-api"
+    metrics_path: "/metrics"
+    static_configs:
+      - targets: ["host.docker.internal:8000"] # Resolves your local host machine network from inside the container
