@@ -9,6 +9,7 @@ Faker==37.4.0
 fastapi==0.116.1
 filelock==3.29.4
 fsspec==2026.6.0
+greenlet==3.5.1
 grpcio==1.81.1
 h11==0.16.0
 h2==4.3.0
