@@ -25,8 +25,33 @@ class UserRepository:
 
 
 class ArticleRepository:
-    pass
+    def __init__(self, db: AsyncSession):
+        self.db = db
 
+    async def get_by_id(self, article_id: int) -> Article | None:
+        stmt = select(Article).where(Article.article_id == article_id)
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def list_articles(self, skip: int = 0, limit: int = 100) -> list[Article]:
+        stmt = select(Article).offset(skip).limit(limit)
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
+
+    async def get_by_category(self, category: str, limit: int = 50) -> list[Article]:
+        stmt = select(Article).where(Article.category == category).limit(limit)
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
+
+    async def search_by_tags(self, tags: list[str]) -> list[Article]:
+        stmt = select(Article)
+        result = await self.db.execute(stmt)
+        articles = result.scalars().all()
+        return [
+            article
+            for article in articles
+            if any(tag in article.tags for tag in tags)
+        ]
 
 class EventRepository:
     pass
