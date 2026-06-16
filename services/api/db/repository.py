@@ -1,3 +1,5 @@
+from sched import Event
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from services.api.models.article import Article
@@ -53,6 +55,38 @@ class ArticleRepository:
             for article in articles
             if any(tag in article.tags for tag in tags)
         ]
-
 class EventRepository:
-    pass
+    def __init__(self, db: AsyncSession):
+        self.db = db
+
+    async def create_event(self, event: Event) -> Event:
+        self.db.add(event)
+        await self.db.commit()
+        await self.db.refresh(event)
+        return event
+
+    async def get_user_events(self, user_id: int, limit: int = 100) -> list[Event]:
+        stmt = (
+            select(Event)
+            .where(Event.user_id == user_id)
+            .order_by(Event.timestamp.desc())
+            .limit(limit)
+        )
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
+
+    async def get_user_clicked_articles(self, user_id: int) -> list[int]:
+        stmt = (
+            select(Event.article_id)
+            .where(
+                Event.user_id == user_id,
+                Event.event_type == "click",
+            )
+        )
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
+
+    async def get_article_events(self, article_id: int) -> list[Event]:
+        stmt = select(Event).where(Event.article_id == article_id)
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
