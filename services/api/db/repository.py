@@ -1,5 +1,5 @@
-from sched import Event
 
+from services.api.models.event import Event 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from services.api.models.article import Article
@@ -80,7 +80,7 @@ class EventRepository:
             select(Event.article_id)
             .where(
                 Event.user_id == user_id,
-                Event.event_type == "click",
+                Event.event_type == "click"
             )
         )
         result = await self.db.execute(stmt)
