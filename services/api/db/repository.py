@@ -31,6 +31,17 @@ class ArticleRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
+    async def get_articles_by_ids(self, ids: list[int]) -> list[Article]:
+        """Performs a highly optimized batch lookup matching a designated array of primary keys."""
+        if not ids:
+            return []
+        stmt = select(Article).where(Article.article_id.in_(ids))
+        result = await self.db.execute(stmt)
+        articles = list(result.scalars().all())
+        
+        # Map objects to guarantee we preserve the precise semantic distance order returned by Qdrant
+        id_to_article = {a.article_id: a for a in articles}
+        return [id_to_article[i] for i in ids if i in id_to_article]
     async def get_by_id(self, article_id: int) -> Article | None:
         stmt = select(Article).where(Article.article_id == article_id)
         result = await self.db.execute(stmt)
