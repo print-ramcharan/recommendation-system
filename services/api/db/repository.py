@@ -1,16 +1,32 @@
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-# Note: You'll want to import your User, Article, and Event SQLAlchemy models here later
+from services.api.models.user import User
+
 
 class UserRepository:
-    def __init__(self, session: AsyncSession):
-        self.session = session
+    def __init__(self, db: AsyncSession):
+        self.db = db
+
+    async def get_by_id(self, user_id: int) -> User | None:
+        stmt = select(User).where(User.user_id == user_id)
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def create(self, user: User) -> User:
+        self.db.add(user)
+        await self.db.commit()
+        await self.db.refresh(user)
+        return user
+
+    async def list_users(self, skip: int = 0, limit: int = 100) -> list[User]:
+        stmt = select(User).offset(skip).limit(limit)
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
 
 
 class ArticleRepository:
-    def __init__(self, session: AsyncSession):
-        self.session = session
+    pass
 
 
 class EventRepository:
-    def __init__(self, session: AsyncSession):
-        self.session = session
+    pass
