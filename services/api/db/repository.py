@@ -1,5 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from services.api.models.article import Article
 from services.api.models.user import User
 
 
