@@ -1,14 +1,14 @@
 import asyncio
 import random
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from faker import Faker
 
 from services.api.db.database import SessionLocal
 from services.api.models.user import User
 from services.api.models.article import Article
 from services.api.models.event import Event
-
+from sqlalchemy import text
 fake = Faker()
 
 # Data Matrix Constraints
@@ -25,7 +25,11 @@ EVENT_TYPES = ["view", "click", "bookmark", "share"]
 async def seed_data():
     async with SessionLocal() as session:
         print("🚀 Initiating data pipeline seeding engine...")
-
+        
+        # Clear existing entries to prevent UniqueViolationError on reruns
+        print("🧹 Clearing existing data from the database...")
+        await session.execute(text("TRUNCATE TABLE events, users, articles RESTART IDENTITY CASCADE;"))
+        await session.commit()
         # 1. Generate Unique User Entities
         print(f"👥 Populating {NUM_USERS} user records...")
         user_ids = list({random.randint(100000, 999999) for _ in range(NUM_USERS * 2)})[:NUM_USERS]
@@ -39,7 +43,7 @@ async def seed_data():
                 interests={"preferred_topics": random.sample(CATEGORIES, k=random.randint(1, 3))},
                 device_type=random.choice(DEVICE_TYPES),
                 subscription=random.choice(SUBSCRIPTIONS),
-                created_at=datetime.utcnow() - timedelta(days=random.randint(1, 180))
+                created_at=datetime.now(UTC).replace(tzinfo=None) - timedelta(days=random.randint(1, 180))
             )
             users.append(user)
         
@@ -57,7 +61,7 @@ async def seed_data():
                 title=fake.sentence(nb_words=random.randint(5, 10)),
                 category=random.choice(CATEGORIES),
                 tags={"keywords": [fake.word() for _ in range(random.randint(2, 5))]},
-                publish_time=datetime.utcnow() - timedelta(days=random.randint(1, 90)),
+                publish_time=datetime.now(UTC).replace(tzinfo=None) - timedelta(days=random.randint(1, 90)),
                 author_id=random.randint(1000, 9999)
             )
             articles.append(article)
@@ -69,7 +73,7 @@ async def seed_data():
         print(f"📊 Logging {NUM_EVENTS} user-content relational interaction logs...")
         events = []
         for _ in range(NUM_EVENTS):
-            event_timestamp = datetime.utcnow() - timedelta(
+            event_timestamp = datetime.now(UTC).replace(tzinfo=None) - timedelta(
                 days=random.randint(0, 30),
                 hours=random.randint(0, 23),
                 minutes=random.randint(0, 59)
