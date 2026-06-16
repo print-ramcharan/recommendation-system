@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # Database dependency
@@ -10,12 +10,14 @@ from services.api.db.services import RecommendationService
 
 # Schemas
 from services.api.schemas.recommendation import RecommendationResponse
+from services.api.schemas.article import SimilarArticleResponse  # Reusing our lean metadata schema
 
-
-from fastapi import HTTPException
-from services.api.schemas.article import SimilarArticleResponse # Reusing our lean metadata schema
+# ML Elements
 from ml.embeddings.user_embeddings import compute_user_embedding
 from ml.embeddings.qdrant_client import search_by_vector
+
+# Cache Layer Elements
+from services.cache.redis_client import get_cached_user_embedding, set_cached_user_embedding
 
 
 router = APIRouter(
@@ -59,25 +61,36 @@ async def get_personalized_recommendations(
     event_repo = EventRepository(db)
     article_repo = ArticleRepository(db)
     
-    # 1. Fetch user context record
+    # 1. Verify profile exists
     user = await user_repo.get_by_id(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User profile records not found.")
         
-    # 2. Extract past history using your existing repository tracker
+    # 2. STAGE 0: Feature Store Read Look-up (O(1))
+    user_vector = get_cached_user_embedding(user_id)
+    
+    if user_vector is not None:
+        print(f"⚡ [Cache Hit] Retrieved user_embedding:{user_id} instantly from Redis Feature Store.")
+    else:
+        print(f"🐢 [Cache Miss] Computing dynamic user vector profile on demand for user {user_id}.")
+        # Extract past history using your existing repository tracker
+        clicked_ids = await event_repo.get_user_clicked_articles(user_id)
+        # Compute dynamic user profile embedding vector
+        user_vector = compute_user_embedding(clicked_ids, fallback_interests=user.interests)
+        # Commit back to cache layer asynchronously so next hits are lightning fast (TTL: 1 hour)
+        set_cached_user_embedding(user_id, user_vector, ttl=3600)
+
+    # Need clicked history here as well to cleanly handle Step 5 filtering
     clicked_ids = await event_repo.get_user_clicked_articles(user_id)
     
-    # 3. Compute dynamic user profile embedding vector
-    user_vector = compute_user_embedding(clicked_ids, fallback_interests=user.interests)
-    
-    # 4. STAGE 1: Vector Search (Fetch k + length of history to guarantee enough clean options)
+    # 3. STAGE 1: Vector Search (Fetch k + length of history to guarantee enough clean options)
     search_limit = k + len(clicked_ids) + 10
     raw_matches = search_by_vector(query_vector=user_vector, limit=search_limit)
     
-    # 5. STAGE 2: Post-Retrieval Heuristic Filtering
+    # 4. STAGE 2: Post-Retrieval Heuristic Filtering
     seen_set = set(clicked_ids)
     filtered_candidate_ids = [point.id for point in raw_matches if point.id not in seen_set][:k]
     
-    # 6. Metadata Hydration from PostgreSQL
+    # 5. Metadata Hydration from PostgreSQL
     recommended_articles = await article_repo.get_articles_by_ids(filtered_candidate_ids)
     return recommended_articles
