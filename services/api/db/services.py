@@ -1,6 +1,8 @@
 from services.api.models.event import Event
 from services.api.models.article import Article
 from services.api.db.repository import UserRepository, ArticleRepository, EventRepository
+from services.api.schemas.event import EventCreate
+from services.streaming.producer import publish_event
 
 
 class EventService:
@@ -10,6 +12,29 @@ class EventService:
     async def log_event(self, event: Event) -> Event:
         return await self.event_repo.create_event(event)
 
+    async def ingest_user_event(self, event_in: EventCreate):
+        """Orchestrates relational storage ingestion and broadcasts to the streaming queue."""
+        # A. Commit to PostgreSQL to maintain source-of-truth metadata audit logs
+        new_event = await self.event_repo.create(event_in)
+        
+        # B. Unpack model fields into a serialization-ready dictionary payload
+        event_payload = {
+            "event_id": new_event.event_id,
+            "user_id": new_event.user_id,
+            "article_id": new_event.article_id,
+            "event_type": new_event.event_type,
+            "timestamp": str(new_event.timestamp) if hasattr(new_event, 'timestamp') else None
+        }
+
+        # C. Intercept and dispatch to the Kafka event message broker
+        try:
+            publish_event(event_payload)
+        except Exception as e:
+            # Resilient safety boundary: Never crash an active client API response 
+            # if the broker backplane experiences temporary network hiccups.
+            print(f"⚠️ Ingestion boundary fallback: Kafka publish step errored: {e}")
+
+        return new_event
     async def get_user_history(self, user_id: int, limit: int = 100) -> list[Event]:
         return await self.event_repo.get_user_events(
             user_id=user_id,
