@@ -9,9 +9,9 @@ COLLECTION_NAME = "articles"
 
 
 def get_qdrant_client() -> QdrantClient:
-    """Initializes and returns a connection to the Qdrant engine."""
-    return QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
-
+    """Initializes and returns a connection to the Qdrant cluster."""
+    # check_compatibility=False completely removes the client-server version warning
+    return QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT, check_compatibility=False)
 
 def init_collection_and_upsert():
     client = get_qdrant_client()
@@ -56,6 +56,14 @@ def init_collection_and_upsert():
     collection_info = client.get_collection(collection_name=COLLECTION_NAME)
     print(f"Successfully indexed! Total active vectors in collection: {collection_info.points_count}")
 
+def search_similar_articles(query_vector: list[float], limit: int = 5):
+    """Executes an ANN approximate nearest neighbors query against the cluster."""
+    client = get_qdrant_client()
+    return client.search(
+        collection_name=COLLECTION_NAME,
+        query_vector=query_vector,
+        limit=limit + 1  # Offset by 1 to discard self-referential rows safely
+    )
 
 if __name__ == "__main__":
     init_collection_and_upsert()
