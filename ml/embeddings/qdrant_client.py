@@ -65,5 +65,14 @@ def search_similar_articles(query_vector: list[float], limit: int = 5):
         limit=limit + 1  # Offset by 1 to discard self-referential rows safely
     )
 
+def search_by_vector(query_vector: list[float], limit: int = 10):
+    """Queries the Qdrant cluster directly using a raw computed dense vector profile."""
+    client = get_qdrant_client()
+    return client.search(
+        collection_name=COLLECTION_NAME,
+        query_vector=query_vector,
+        limit=limit
+    )
+
 if __name__ == "__main__":
     init_collection_and_upsert()
