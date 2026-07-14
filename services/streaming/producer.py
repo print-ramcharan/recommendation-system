@@ -26,17 +26,24 @@ def get_producer():
         print(f"⚠️ Lazy initialization failed to connect to Kafka Broker: {e}")
         return None
 
+def on_success(record_metadata):
+    """Callback fired on successful Kafka broker commit acknowledgment."""
+    print(f"📡 Broadcast confirmed! Partition: {record_metadata.partition} | Offset: {record_metadata.offset}")
+
+
+def on_error(excp):
+    """Callback triggered if event dispatch fails."""
+    print(f"❌ Failed to dispatch message to Kafka topic: {excp}")
+
+
 def publish_event(event_data: dict):
-    """Dispatches an ingestion payload over the user-events cluster topic and blocks for confirmation."""
+    """Dispatches an ingestion payload over the user-events cluster topic asynchronously."""
     producer_instance = get_producer()
     if producer_instance is None:
         print("⚠️ Event omitted. Kafka broker is currently unreachable.")
         return
 
     try:
-        future = producer_instance.send(TOPIC_NAME, value=event_data)
-        # Block up to 2 seconds to force metadata synchronization across partitions
-        record_metadata = future.get(timeout=2)
-        print(f"📡 Broadcast confirmed! Partition: {record_metadata.partition} | Offset: {record_metadata.offset}")
+        producer_instance.send(TOPIC_NAME, value=event_data).add_callback(on_success).add_errback(on_error)
     except Exception as e:
         print(f"❌ Failed to dispatch message to Kafka topic: {e}")
