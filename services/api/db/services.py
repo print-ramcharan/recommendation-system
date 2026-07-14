@@ -12,14 +12,19 @@ class EventService:
     async def log_event(self, event: Event) -> Event:
         return await self.event_repo.create_event(event)
 
-    async def ingest_user_event(self, event_in: EventCreate):
+    async def ingest_user_event(self, event_in: EventCreate) -> Event:
         """Orchestrates relational storage ingestion and broadcasts to the streaming queue."""
         # A. Commit to PostgreSQL to maintain source-of-truth metadata audit logs
-        new_event = await self.event_repo.create(event_in)
+        db_event = Event(
+            user_id=event_in.user_id,
+            article_id=event_in.article_id,
+            event_type=event_in.event_type,
+        )
+        new_event = await self.event_repo.create_event(db_event)
         
         # B. Unpack model fields into a serialization-ready dictionary payload
         event_payload = {
-            "event_id": new_event.event_id,
+            "event_id": str(new_event.event_id),
             "user_id": new_event.user_id,
             "article_id": new_event.article_id,
             "event_type": new_event.event_type,
