@@ -101,3 +101,16 @@ class EventRepository:
         stmt = select(Event).where(Event.article_id == article_id)
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
+
+    async def get_popular_articles(self, limit: int = 10) -> list[int]:
+        """Queries the database for most frequently clicked articles."""
+        from sqlalchemy import func
+        stmt = (
+            select(Event.article_id)
+            .where(Event.event_type == "click")
+            .group_by(Event.article_id)
+            .order_by(func.count(Event.event_id).desc())
+            .limit(limit)
+        )
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())

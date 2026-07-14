@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # Database dependency
@@ -57,6 +57,7 @@ async def get_recommendations(
 @router.get("/personalized/{user_id}", response_model=list[SimilarArticleResponse])
 async def get_personalized_recommendations(
     user_id: int,
+    response: Response,
     k: int = 10,
     db: AsyncSession = Depends(get_db)
 ):
@@ -71,6 +72,35 @@ async def get_personalized_recommendations(
         if not user:
             raise HTTPException(status_code=404, detail="User profile records not found.")
             
+        # A/B Experiment Traffic Split Allocation (50/50 bucket assignment based on user_id hash)
+        experiment_group = "group-b" if user_id % 2 == 0 else "group-a"
+        response.headers["X-Experiment-Group"] = experiment_group
+        
+        if experiment_group == "group-b":
+            print(f"📊 [A/B Test] Routing user {user_id} to Group B (Heuristic Popularity Baseline).")
+            # Fetch popular clicked articles from Postgres
+            popular_ids = await event_repo.get_popular_articles(limit=k * 2)
+            # Filter out seen articles
+            clicked_ids = await event_repo.get_user_clicked_articles(user_id)
+            seen_set = set(clicked_ids)
+            filtered_ids = [aid for aid in popular_ids if aid not in seen_set][:k]
+            
+            # Fallback to category list if not enough popular clicked articles
+            if len(filtered_ids) < k:
+                # Fetch baseline articles matching first interest
+                interests_dict = user.interests or {}
+                topics = interests_dict.get("preferred_topics", ["tech"]) if isinstance(interests_dict, dict) else ["tech"]
+                interest = topics[0] if topics else "tech"
+                category_articles = await article_repo.get_by_category(interest, limit=k * 2)
+                for art in category_articles:
+                    if art.article_id not in seen_set and art.article_id not in filtered_ids:
+                        filtered_ids.append(art.article_id)
+                        if len(filtered_ids) == k:
+                            break
+                            
+            return await article_repo.get_articles_by_ids(filtered_ids[:k])
+            
+        print(f"📊 [A/B Test] Routing user {user_id} to Group A (Personalized Vector Search).")
         # STAGE 0: Feature Store Read Look-up (O(1))
         user_vector = get_cached_user_embedding(user_id)
         
