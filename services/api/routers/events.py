@@ -25,12 +25,5 @@ async def create_event(
     event_repo = EventRepository(db)
     service = EventService(event_repo=event_repo)
 
-    # Convert incoming Pydantic payload to SQLAlchemy Model
-    db_event = Event(
-        user_id=payload.user_id,
-        article_id=payload.article_id,
-        event_type=payload.event_type,
-    )
-
-    saved_event = await service.log_event(db_event)
+    saved_event = await service.ingest_user_event(payload)
     return EventResponse.model_validate(saved_event)
