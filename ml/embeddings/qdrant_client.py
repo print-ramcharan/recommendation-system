@@ -8,10 +8,15 @@ QDRANT_PORT = 6333
 COLLECTION_NAME = "articles"
 
 
+_qdrant_client = None
+
+
 def get_qdrant_client() -> QdrantClient:
-    """Initializes and returns a connection to the Qdrant cluster."""
-    # check_compatibility=False completely removes the client-server version warning
-    return QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT, check_compatibility=False)
+    """Initializes and returns a thread-safe singleton connection to the Qdrant cluster."""
+    global _qdrant_client
+    if _qdrant_client is None:
+        _qdrant_client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT, check_compatibility=False)
+    return _qdrant_client
 
 def init_collection_and_upsert():
     client = get_qdrant_client()
