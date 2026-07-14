@@ -22,7 +22,9 @@ async def get_similar_articles(
         raise HTTPException(status_code=404, detail="Target article metadata records not found.")
 
     # 2. Reconstruct matching raw context text string
-    metadata_text = f"{source_article.title} {source_article.category} {' '.join(source_article.tags)}"
+    tags_dict = source_article.tags or {}
+    keywords = tags_dict.get("keywords", []) if isinstance(tags_dict, dict) else []
+    metadata_text = f"{source_article.title} {source_article.category} {' '.join(keywords)}"
     query_vector = embedding_model.encode(metadata_text).tolist()
 
     # 3. Pull matches out of the vector engine space

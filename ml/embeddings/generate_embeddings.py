@@ -35,8 +35,9 @@ async def generate_article_embeddings():
     embedding_payload = []
 
     for article in articles:
-        # Construct dense feature document combining Title + Category + Space-separated tags
-        metadata_text = f"{article.title} {article.category} {' '.join(article.tags)}"
+        tags_dict = article.tags or {}
+        keywords = tags_dict.get("keywords", []) if isinstance(tags_dict, dict) else []
+        metadata_text = f"{article.title} {article.category} {' '.join(keywords)}"
 
         # Compute embedding matrix locally (Inference runs on CPU/Apple Silicon smoothly)
         vector = model.encode(metadata_text)
