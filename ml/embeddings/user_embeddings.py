@@ -3,14 +3,23 @@ from qdrant_client import QdrantClient
 from ml.embeddings.qdrant_client import get_qdrant_client, COLLECTION_NAME
 from ml.embeddings.generate_embeddings import model as embedding_model
 
-def compute_user_embedding(clicked_article_ids: list[int], fallback_interests: str) -> list[float]:
+def compute_user_embedding(clicked_article_ids: list[int], fallback_interests) -> list[float]:
     """
     Computes a dynamic user embedding vector.
     Averages past article interactions or falls back to interest metadata.
     """
+    # Safeguard interests parsing (handles JSON column dicts or lists)
+    if isinstance(fallback_interests, dict):
+        topics = fallback_interests.get("preferred_topics", [])
+        fallback_text = " ".join(topics) if isinstance(topics, list) else str(fallback_interests)
+    elif isinstance(fallback_interests, list):
+        fallback_text = " ".join(fallback_interests)
+    else:
+        fallback_text = str(fallback_interests)
+
     if not clicked_article_ids:
         # Cold start fallback: Encode baseline interests
-        return embedding_model.encode(fallback_interests).tolist()
+        return embedding_model.encode(fallback_text).tolist()
     
     client = get_qdrant_client()
     try:
@@ -32,4 +41,4 @@ def compute_user_embedding(clicked_article_ids: list[int], fallback_interests: s
         print(f"Vector retrieval exception: {e}. Dropping to fallback profile.")
         
     # Warm fallback if vector database retrieval experiences a connection glitch
-    return embedding_model.encode(fallback_interests).tolist()
+    return embedding_model.encode(fallback_text).tolist()
