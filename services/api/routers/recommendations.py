@@ -117,14 +117,29 @@ async def get_personalized_recommendations(
         # Re-fetch interaction history to guarantee deduplication slicing
         clicked_ids = await event_repo.get_user_clicked_articles(user_id)
         
-        # STAGE 1: Vector Search (Fetch k + length of history to guarantee enough clean options)
-        search_limit = k + len(clicked_ids) + 10
+        # STAGE 1: Vector Search (Fetch larger pool for re-ranking)
+        search_limit = max(50, k * 3)
         raw_matches = search_by_vector(query_vector=user_vector, limit=search_limit)
+        
+        # Map Qdrant similarity scores
+        similarity_scores = {point.id: point.score for point in raw_matches}
         
         # STAGE 2: Post-Retrieval Heuristic Filtering
         seen_set = set(clicked_ids)
-        filtered_candidate_ids = [point.id for point in raw_matches if point.id not in seen_set][:k]
+        filtered_candidate_ids = [point.id for point in raw_matches if point.id not in seen_set]
         
         # Metadata Hydration from PostgreSQL
-        recommended_articles = await article_repo.get_articles_by_ids(filtered_candidate_ids)
+        candidate_articles = await article_repo.get_articles_by_ids(filtered_candidate_ids)
+        
+        # STAGE 3: Heuristic Re-ranking (freshness decay & category boost)
+        interests_dict = user.interests or {}
+        preferred_topics = interests_dict.get("preferred_topics", []) if isinstance(interests_dict, dict) else []
+        
+        from ml.embeddings.reranking import rerank_candidates
+        recommended_articles = rerank_candidates(
+            articles=candidate_articles,
+            similarity_scores=similarity_scores,
+            preferred_topics=preferred_topics
+        )[:k]
+        
         return recommended_articles
