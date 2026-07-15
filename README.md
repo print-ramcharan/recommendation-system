@@ -8,6 +8,12 @@ Production-grade recommendation platform with semantic search, personalized retr
 
 ![System Architecture](docs/images/architecture.svg)
 
+### Monitoring & Metrics
+
+The system is equipped with Prometheus and Grafana for complete observability:
+* **Prometheus**: Dashboard accessible at `http://localhost:9090`
+* **Grafana**: Pre-configured dashboard at `http://localhost:3000` (User: `admin`, Pass: `admin`) displaying recommendation latency metrics and Redis cache hit/miss rates.
+
 ---
 
 ## System Overview
