@@ -6,32 +6,7 @@ Production-grade recommendation platform with semantic search, personalized retr
 
 ## Architecture
 
-```mermaid
-flowchart TD
-
-    U[User] --> API[FastAPI]
-
-    API --> REC[Recommendation Service]
-    API --> EVT[Event Service]
-    API --> SIM[Similarity Search]
-
-    REC --> REDIS[(Redis)]
-    REC --> PG[(PostgreSQL)]
-    REC --> QD[(Qdrant)]
-
-    SIM --> QD
-    SIM --> PG
-
-    EVT --> PG
-    EVT --> KAFKA[Kafka Producer]
-
-    KAFKA --> TOPIC[user-events]
-    TOPIC --> CONSUMER[Kafka Consumer]
-
-    CONSUMER --> REDIS
-
-    QD --> EMB[Article Embeddings]
-```
+![System Architecture](docs/images/architecture.svg)
 
 ---
 

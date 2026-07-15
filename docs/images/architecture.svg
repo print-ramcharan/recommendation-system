@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="100%" height="100%" style="background-color: #ffffff; font-family: 'SF Pro Display', -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <!-- Definitions for marker arrows -->
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#4B5563" />
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#2563EB" />
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="450" y="35" text-anchor="middle" font-size="20" font-weight="bold" fill="#111827">Real-Time Recommendation System Architecture</text>
+  <text x="450" y="55" text-anchor="middle" font-size="12" fill="#6B7280" font-style="italic">Production-Grade Event-Driven Vector Recommendation Pipeline</text>
+
+  <!-- Group for Client/User Layer -->
+  <g transform="translate(40, 220)">
+    <rect width="100" height="80" rx="8" fill="#F3F4F6" stroke="#D1D5DB" stroke-width="1.5" />
+    <text x="50" y="35" text-anchor="middle" font-size="14" font-weight="bold" fill="#1F2937">User / Client</text>
+    <text x="50" y="55" text-anchor="middle" font-size="11" fill="#4B5563">HTTP Clients</text>
+    <text x="50" y="68" text-anchor="middle" font-size="9" fill="#9CA3AF">GET / POST</text>
+  </g>
+
+  <!-- Group for API Gateway (FastAPI) -->
+  <g transform="translate(200, 210)">
+    <rect width="140" height="100" rx="8" fill="#EFF6FF" stroke="#3B82F6" stroke-width="1.5" />
+    <text x="70" y="35" text-anchor="middle" font-size="14" font-weight="bold" fill="#1E40AF">FastAPI Gateway</text>
+    <text x="70" y="55" text-anchor="middle" font-size="11" fill="#2563EB">API Controllers</text>
+    <text x="70" y="70" text-anchor="middle" font-size="10" fill="#4B5563">A/B Testing Router</text>
+    <text x="70" y="85" text-anchor="middle" font-size="9" fill="#9CA3AF">metrics instrumentation</text>
+  </g>
+
+  <!-- Group for PostgreSQL (Source of Truth) -->
+  <g transform="translate(420, 80)">
+    <rect width="140" height="80" rx="8" fill="#F0FDF4" stroke="#16A34A" stroke-width="1.5" />
+    <text x="70" y="30" text-anchor="middle" font-size="14" font-weight="bold" fill="#14532D">PostgreSQL</text>
+    <text x="70" y="48" text-anchor="middle" font-size="11" fill="#166534">Source of Truth</text>
+    <text x="70" y="65" text-anchor="middle" font-size="10" fill="#4B5563">Users, Articles, Events</text>
+  </g>
+
+  <!-- Group for Redis Feature Store (Cache) -->
+  <g transform="translate(420, 220)">
+    <rect width="140" height="80" rx="8" fill="#FEF2F2" stroke="#EF4444" stroke-width="1.5" />
+    <text x="70" y="30" text-anchor="middle" font-size="14" font-weight="bold" fill="#7F1D1D">Redis Cache</text>
+    <text x="70" y="48" text-anchor="middle" font-size="11" fill="#991B1B">Feature Store</text>
+    <text x="70" y="65" text-anchor="middle" font-size="10" fill="#4B5563">User Embeddings</text>
+  </g>
+
+  <!-- Group for Qdrant Vector DB -->
+  <g transform="translate(420, 360)">
+    <rect width="140" height="80" rx="8" fill="#FAF5FF" stroke="#8B5CF6" stroke-width="1.5" />
+    <text x="70" y="30" text-anchor="middle" font-size="14" font-weight="bold" fill="#4C1D95">Qdrant Vector DB</text>
+    <text x="70" y="48" text-anchor="middle" font-size="11" fill="#5B21B6">Similarity Search</text>
+    <text x="70" y="65" text-anchor="middle" font-size="10" fill="#4B5563">Article Embeddings</text>
+  </g>
+
+  <!-- Group for Event Streaming (Kafka) -->
+  <g transform="translate(200, 470)">
+    <rect width="140" height="70" rx="8" fill="#FFFBEB" stroke="#D97706" stroke-width="1.5" />
+    <text x="70" y="30" text-anchor="middle" font-size="14" font-weight="bold" fill="#78350F">Kafka Producer</text>
+    <text x="70" y="50" text-anchor="middle" font-size="11" fill="#B45309">Async Dispatch</text>
+  </g>
+
+  <g transform="translate(420, 470)">
+    <rect width="140" height="70" rx="8" fill="#FFFBEB" stroke="#D97706" stroke-dasharray="4,4" stroke-width="1.5" />
+    <text x="70" y="30" text-anchor="middle" font-size="14" font-weight="bold" fill="#78350F">Kafka Cluster</text>
+    <text x="70" y="50" text-anchor="middle" font-size="11" fill="#B45309">topic: user-events</text>
+  </g>
+
+  <g transform="translate(640, 470)">
+    <rect width="140" height="70" rx="8" fill="#FFFBEB" stroke="#D97706" stroke-width="1.5" />
+    <text x="70" y="30" text-anchor="middle" font-size="14" font-weight="bold" fill="#78350F">Kafka Consumer</text>
+    <text x="70" y="50" text-anchor="middle" font-size="11" fill="#B45309">Real-time Processor</text>
+  </g>
+
+  <!-- Connectors / Data Flow Arrows -->
+  
+  <!-- User <-> FastAPI (Bidirectional HTTP flow) -->
+  <path d="M 140 250 L 192 250" stroke="#3B82F6" stroke-width="2" marker-end="url(#arrow-blue)" />
+  <path d="M 192 270 L 142 270" stroke="#3B82F6" stroke-width="2" marker-end="url(#arrow-blue)" />
+  <text x="166" y="240" text-anchor="middle" font-size="9" fill="#3B82F6" font-weight="bold">Requests</text>
+  <text x="166" y="292" text-anchor="middle" font-size="9" fill="#3B82F6" font-weight="bold">Responses</text>
+
+  <!-- FastAPI -> PostgreSQL -->
+  <path d="M 270 210 Q 270 120 412 120" fill="none" stroke="#4B5563" stroke-width="1.5" stroke-dasharray="3,3" marker-end="url(#arrow)" />
+  <text x="310" y="110" font-size="10" fill="#4B5563">Audit Logs / Metadata</text>
+
+  <!-- FastAPI <-> Redis -->
+  <path d="M 340 250 L 412 250" stroke="#4B5563" stroke-width="1.5" marker-end="url(#arrow)" />
+  <path d="M 412 270 L 340 270" stroke="#4B5563" stroke-width="1.5" marker-end="url(#arrow)" />
+  <text x="375" y="242" text-anchor="middle" font-size="10" fill="#4B5563">Cache Check</text>
+
+  <!-- FastAPI -> Qdrant -->
+  <path d="M 270 310 Q 270 400 412 400" fill="none" stroke="#4B5563" stroke-width="1.5" marker-end="url(#arrow)" />
+  <text x="310" y="415" font-size="10" fill="#4B5563">Vector Search</text>
+
+  <!-- FastAPI -> Kafka Producer -->
+  <path d="M 230 310 L 230 462" stroke="#D97706" stroke-width="1.5" marker-end="url(#arrow)" />
+  <text x="175" y="380" font-size="10" fill="#D97706">Async Event Log</text>
+
+  <!-- Kafka Producer -> Kafka Cluster -->
+  <path d="M 340 505 L 412 505" stroke="#D97706" stroke-width="1.5" marker-end="url(#arrow)" />
+
+  <!-- Kafka Cluster -> Kafka Consumer -->
+  <path d="M 560 505 L 632 505" stroke="#D97706" stroke-width="1.5" marker-end="url(#arrow)" />
+
+  <!-- Kafka Consumer -> Redis (Real-Time Cache Updates) -->
+  <path d="M 710 470 Q 710 260 568 260" fill="none" stroke="#EF4444" stroke-width="1.5" marker-end="url(#arrow)" />
+  <text x="690" y="320" font-size="10" fill="#EF4444" text-anchor="middle" transform="rotate(-90 690 320)">Compute &amp; Update Cache</text>
+
+  <!-- Kafka Consumer -> PostgreSQL (Fallback) -->
+  <path d="M 740 470 Q 780 120 568 120" fill="none" stroke="#16A34A" stroke-width="1.5" stroke-dasharray="3,3" marker-end="url(#arrow)" />
+  <text x="760" y="270" font-size="10" fill="#16A34A" text-anchor="middle" transform="rotate(-90 760 270)">Fetch History</text>
+
+</svg>
