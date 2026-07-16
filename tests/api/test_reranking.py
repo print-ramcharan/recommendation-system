@@ -2,6 +2,8 @@ import pytest
 from datetime import datetime, timedelta
 from ml.embeddings.reranking import rerank_candidates
 from services.api.models.article import Article
+from services.api.models.event import Event
+from services.api.models.user import User
 
 def test_rerank_candidates_freshness_and_boost():
     now = datetime.utcnow()
