@@ -1,4 +1,6 @@
-from fastapi import FastAPI, Depends, HTTPException
+import time
+import logging
+from fastapi import FastAPI, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from services.api.db.database import get_db
@@ -9,10 +11,24 @@ from services.api.routers.events import router as event_router
 from services.api.routers.articles import router as article_router
 from prometheus_fastapi_instrumentator import Instrumentator
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("api")
+
 app = FastAPI(
     title="Recommendation System",
     version="0.1.0",
 )
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = (time.time() - start_time) * 1000
+    formatted_process_time = f"{process_time:.2f}ms"
+    logger.info(
+        f"📡 [API Request] method={request.method} path={request.url.path} status={response.status_code} duration={formatted_process_time}"
+    )
+    return response
 
 Instrumentator().instrument(app).expose(app)
 
