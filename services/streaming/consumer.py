@@ -94,15 +94,22 @@ def start_event_consumer():
                 return
 
     try:
-        for message in consumer:
-            event_payload = message.value
-            print("--- [ Incoming Real-Time Streaming Event Captured ] ---")
-            print(f"Message Offset: {message.offset} | Partition: {message.partition}")
-            print(json.dumps(event_payload, indent=2))
-            print("--------------------------------------------------------\n")
-            
-            handle_user_event(event_payload)
-            
+        while True:
+            # Poll for messages to avoid stalling on partition rebalances
+            msg_pack = consumer.poll(timeout_ms=1000)
+            if not msg_pack:
+                continue
+                
+            for tp, messages in msg_pack.items():
+                for message in messages:
+                    event_payload = message.value
+                    print("--- [ Incoming Real-Time Streaming Event Captured ] ---")
+                    print(f"Message Offset: {message.offset} | Partition: {message.partition}")
+                    print(json.dumps(event_payload, indent=2))
+                    print("--------------------------------------------------------\n")
+                    
+                    handle_user_event(event_payload)
+                    
     except KeyboardInterrupt:
         print("\nStopping streaming consumer engines cleanly...")
     finally:
