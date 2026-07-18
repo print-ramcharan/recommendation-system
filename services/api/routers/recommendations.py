@@ -72,8 +72,15 @@ async def get_personalized_recommendations(
         if not user:
             raise HTTPException(status_code=404, detail="User profile records not found.")
             
-        # A/B Experiment Traffic Split Allocation (50/50 bucket assignment based on user_id hash)
-        experiment_group = "group-b" if user_id % 2 == 0 else "group-a"
+        # A/B Experiment Traffic Split Allocation (3-way split: Group A, B, and C)
+        bucket = user_id % 3
+        if bucket == 0:
+            experiment_group = "group-a"
+        elif bucket == 1:
+            experiment_group = "group-b"
+        else:
+            experiment_group = "group-c"
+            
         response.headers["X-Experiment-Group"] = experiment_group
         
         if experiment_group == "group-b":
@@ -100,8 +107,7 @@ async def get_personalized_recommendations(
                             
             return await article_repo.get_articles_by_ids(filtered_ids[:k])
             
-        print(f"📊 [A/B Test] Routing user {user_id} to Group A (Personalized Vector Search).")
-        # STAGE 0: Feature Store Read Look-up (O(1))
+        # STAGE 0: Feature Store Read Look-up (O(1)) for Group A and Group C
         user_vector = get_cached_user_embedding(user_id)
         
         if user_vector is not None:
@@ -121,15 +127,27 @@ async def get_personalized_recommendations(
         search_limit = max(50, k * 3)
         raw_matches = search_by_vector(query_vector=user_vector, limit=search_limit)
         
-        # Map Qdrant similarity scores
-        similarity_scores = {point.id: point.score for point in raw_matches}
-        
         # STAGE 2: Post-Retrieval Heuristic Filtering
         seen_set = set(clicked_ids)
         filtered_candidate_ids = [point.id for point in raw_matches if point.id not in seen_set]
         
         # Metadata Hydration from PostgreSQL
         candidate_articles = await article_repo.get_articles_by_ids(filtered_candidate_ids)
+
+        if experiment_group == "group-c":
+            print(f"📊 [A/B Test] Routing user {user_id} to Group C (NCF Neural Re-ranking).")
+            # STAGE 3: NCF model predictor scoring
+            from ml.training.model_loader import NeuralCollaborativeFilteringPredictor
+            predictor = NeuralCollaborativeFilteringPredictor()
+            scores = predictor.predict_score(user_id, [art.article_id for art in candidate_articles])
+            
+            # Sort candidate articles descending by their neural scores
+            candidate_articles.sort(key=lambda art: scores.get(art.article_id, 0.0), reverse=True)
+            return candidate_articles[:k]
+
+        print(f"📊 [A/B Test] Routing user {user_id} to Group A (Personalized Vector Search with Heuristic decay).")
+        # Map Qdrant similarity scores
+        similarity_scores = {point.id: point.score for point in raw_matches}
         
         # STAGE 3: Heuristic Re-ranking (freshness decay & category boost)
         interests_dict = user.interests or {}
