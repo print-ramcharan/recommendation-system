@@ -26,10 +26,11 @@ async def test_recommendations_endpoint():
 @pytest.mark.anyio
 async def test_personalized_ab_testing_recommendations():
     async with SessionLocal() as session:
-        user_ids = (await session.execute(select(User.user_id).limit(10))).scalars().all()
+        user_ids = (await session.execute(select(User.user_id).limit(50))).scalars().all()
 
-    user_a = next((uid for uid in user_ids if uid % 2 != 0), None)
-    user_b = next((uid for uid in user_ids if uid % 2 == 0), None)
+    user_a = next((uid for uid in user_ids if uid % 3 == 0), None)
+    user_b = next((uid for uid in user_ids if uid % 3 == 1), None)
+    user_c = next((uid for uid in user_ids if uid % 3 == 2), None)
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         if user_a:
@@ -43,3 +44,9 @@ async def test_personalized_ab_testing_recommendations():
             assert res_b.status_code == 200
             assert res_b.headers.get("X-Experiment-Group") == "group-b"
             assert isinstance(res_b.json(), list)
+
+        if user_c:
+            res_c = await ac.get(f"/recommendations/personalized/{user_c}?k=5")
+            assert res_c.status_code == 200
+            assert res_c.headers.get("X-Experiment-Group") == "group-c"
+            assert isinstance(res_c.json(), list)
