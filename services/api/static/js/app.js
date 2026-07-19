@@ -111,6 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     recsList.innerHTML = `<div style="padding: 1rem; color: var(--text-secondary);">Generating...</div>`;
     recStats.style.display = "block";
+    logActivity(`[Simulator] Fetching personalized recommendations for user ${userId} (k=${limit})...`);
 
     const startTime = performance.now();
     try {
@@ -129,6 +130,7 @@ document.addEventListener("DOMContentLoaded", () => {
       experimentBadge.className = `badge badge-${experimentGroup}`;
       responseTimeVal.textContent = `${duration}ms`;
       addLatencyRecord(duration);
+      logActivity(`[Simulator] Mapped ${articles.length} recommendations in ${duration}ms via ${experimentGroup.toUpperCase()}`);
 
       // Render Recommendations
       if (articles.length === 0) {
@@ -146,6 +148,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     } catch (err) {
       recsList.innerHTML = `<div style="padding: 1rem; color: #ef4444;">Failed: ${err.message}</div>`;
+      logActivity(`[Simulator] Failed to generate recommendations: ${err.message}`);
     }
   });
 
