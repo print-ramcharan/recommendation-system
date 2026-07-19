@@ -16,6 +16,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const postgresStatus = document.getElementById("postgresStatus");
   const redisStatus = document.getElementById("redisStatus");
   const qdrantStatus = document.getElementById("qdrantStatus");
+  const activityLog = document.getElementById("activityLog");
+
+  function logActivity(message) {
+    const timestamp = new Date().toLocaleTimeString();
+    activityLog.innerHTML += `<br>[${timestamp}] ${message}`;
+    activityLog.scrollTop = activityLog.scrollHeight;
+  }
+
+  // Expose logActivity globally so that inline click handler can use it
+  window.logActivity = logActivity;
 
   async function checkSystemHealth() {
     try {
@@ -26,10 +36,12 @@ document.addEventListener("DOMContentLoaded", () => {
       updateStatusBadge(postgresStatus, services.postgres);
       updateStatusBadge(redisStatus, services.redis);
       updateStatusBadge(qdrantStatus, services.qdrant);
+      logActivity(`[Health Check] PostgreSQL: ${services.postgres}, Redis: ${services.redis}, Qdrant: ${services.qdrant}`);
     } catch (err) {
       updateStatusBadge(postgresStatus, "offline");
       updateStatusBadge(redisStatus, "offline");
       updateStatusBadge(qdrantStatus, "offline");
+      logActivity(`[Health Check] Failed to query system health: ${err.message}`);
     }
   }
 
