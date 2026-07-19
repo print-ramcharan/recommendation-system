@@ -1,6 +1,8 @@
 import time
 import logging
 from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from services.api.db.database import get_db
@@ -68,3 +70,9 @@ async def health(db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=503, detail={"status": "unhealthy", "services": services_status})
         
     return {"status": "ok", "services": services_status}
+
+app.mount("/static", StaticFiles(directory="services/api/static"), name="static")
+
+@app.get("/dashboard", response_class=FileResponse)
+async def dashboard():
+    return FileResponse("services/api/static/index.html")
