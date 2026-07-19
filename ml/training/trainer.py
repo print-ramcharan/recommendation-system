@@ -53,9 +53,27 @@ class NCFTrainer:
         return total_loss / len(loader.dataset)
 
     def fit(self) -> list[float]:
+        import json
         history = []
         os.makedirs(self.config.training.checkpoint_dir, exist_ok=True)
         
+        def update_status_file(status, epoch, train_loss, val_loss, msg):
+            try:
+                status_path = os.path.join(self.config.training.checkpoint_dir, "status.json")
+                with open(status_path, "w") as f:
+                    json.dump({
+                        "status": status,
+                        "epoch": epoch,
+                        "total_epochs": self.config.training.epochs,
+                        "train_loss": round(train_loss, 4),
+                        "val_loss": round(val_loss, 4),
+                        "message": msg
+                    }, f)
+            except Exception:
+                pass
+
+        update_status_file("training", 0, 0.0, 0.0, "Starting model training fit epochs...")
+
         for epoch in range(1, self.config.training.epochs + 1):
             train_loss = self.train_epoch()
             val_loss = self.evaluate(self.val_loader) if self.val_loader else 0.0
@@ -72,4 +90,7 @@ class NCFTrainer:
                 'loss': train_loss,
             }, checkpoint_path)
             
+            update_status_file("training", epoch, train_loss, val_loss, f"Epoch {epoch}/{self.config.training.epochs} completed.")
+            
+        update_status_file("idle", self.config.training.epochs, train_loss, val_loss, "Model training completed successfully.")
         return history

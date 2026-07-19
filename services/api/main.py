@@ -1,6 +1,8 @@
 import time
 import logging
 from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from services.api.db.database import get_db
@@ -9,6 +11,7 @@ from ml.embeddings.qdrant_client import get_qdrant_client
 from services.api.routers.recommendations import router as recommendation_router
 from services.api.routers.events import router as event_router
 from services.api.routers.articles import router as article_router
+from services.api.routers.ml import router as ml_router
 from prometheus_fastapi_instrumentator import Instrumentator
 
 logging.basicConfig(level=logging.INFO)
@@ -35,6 +38,7 @@ Instrumentator().instrument(app).expose(app)
 app.include_router(recommendation_router)
 app.include_router(event_router)
 app.include_router(article_router)
+app.include_router(ml_router)
 
 @app.get("/health")
 async def health(db: AsyncSession = Depends(get_db)):
@@ -68,3 +72,9 @@ async def health(db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=503, detail={"status": "unhealthy", "services": services_status})
         
     return {"status": "ok", "services": services_status}
+
+app.mount("/static", StaticFiles(directory="services/api/static"), name="static")
+
+@app.get("/dashboard", response_class=FileResponse)
+async def dashboard():
+    return FileResponse("services/api/static/index.html")

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recommendation Engine Simulator</title>
+  <link rel="stylesheet" href="/static/css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Recommendation Engine Simulator</h1>
+      <p style="color: var(--text-secondary);">Real-time simulation, A/B testing evaluation, and semantic vector indexing</p>
+    </header>
+
+    <div style="margin-bottom: 2rem; display: flex; justify-content: center; gap: 2rem; padding: 1rem;" class="card">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span style="font-weight: 700; font-size: 0.9rem;">PostgreSQL:</span>
+        <span id="postgresStatus" class="badge" style="background-color: var(--text-secondary);">Checking...</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span style="font-weight: 700; font-size: 0.9rem;">Redis:</span>
+        <span id="redisStatus" class="badge" style="background-color: var(--text-secondary);">Checking...</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span style="font-weight: 700; font-size: 0.9rem;">Qdrant:</span>
+        <span id="qdrantStatus" class="badge" style="background-color: var(--text-secondary);">Checking...</span>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- Section: Recommendations Simulation -->
+      <div class="card">
+        <h2 class="card-title">👤 Personalized Simulator</h2>
+        <div class="form-group">
+          <label for="userIdInput">Simulate User ID</label>
+          <input type="number" id="userIdInput" value="8888" placeholder="Enter user ID (e.g. 8888)">
+        </div>
+        <div class="form-group">
+          <label for="limitSelect">k Recommendations</label>
+          <select id="limitSelect">
+            <option value="3">3</option>
+            <option value="5" selected>5</option>
+            <option value="10">10</option>
+          </select>
+        </div>
+        <button id="getRecsBtn">Generate Recommendations</button>
+
+        <div id="recStats" style="margin-top: 1.5rem; display: none;">
+          <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+            <div>
+              <span style="font-size: 0.75rem; color: var(--text-secondary); display: block;">Experiment Group</span>
+              <span id="experimentBadge" class="badge">GROUP A</span>
+            </div>
+            <div>
+              <span style="font-size: 0.75rem; color: var(--text-secondary); display: block;">Response Time</span>
+              <span id="responseTimeVal" style="font-weight: 700; color: var(--accent-blue);">0.00ms</span>
+            </div>
+          </div>
+          <div style="margin-top: 1rem; margin-bottom: 1.5rem; height: 180px; position: relative;">
+            <canvas id="latencyChart"></canvas>
+          </div>
+          <div id="recsList"></div>
+        </div>
+      </div>
+
+      <!-- Section: Semantic Search -->
+      <div class="card">
+        <h2 class="card-title">🔍 Semantic Vector Search</h2>
+        <div class="form-group">
+          <label for="searchQueryInput">Natural Language Query</label>
+          <input type="text" id="searchQueryInput" placeholder="Type a search concept (e.g. Machine Learning, Sports matches)">
+        </div>
+        <button id="searchBtn">Search Vector DB</button>
+
+        <div id="searchResultsSection" style="margin-top: 1.5rem; display: none;">
+          <div id="searchResultsList"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid" style="margin-top: 2rem;">
+      <div class="card" style="grid-column: span 2;">
+        <h2 class="card-title">🤖 Neural Collaborative Filtering (NCF) Model Retraining</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 2rem;">
+          <div style="flex: 1;">
+            <p style="color: var(--text-secondary); margin: 0 0 0.5rem 0;">Status: <span id="trainStatusText" style="font-weight: 700; color: var(--accent-blue);">IDLE</span></p>
+            <p style="color: var(--text-secondary); margin: 0; font-size: 0.85rem;" id="trainMessageText">Ready to start training.</p>
+          </div>
+          <div style="width: 250px;">
+            <button id="trainModelBtn">Trigger Retraining</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 2rem;">
+      <h2 class="card-title">📟 Real-time Activity Console</h2>
+      <div id="activityLog" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; font-family: monospace; font-size: 0.85rem; height: 150px; overflow-y: auto; color: var(--accent-green);">
+        [System] Dashboard initialized. Waiting for actions...
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

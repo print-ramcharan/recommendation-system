@@ -36,3 +36,16 @@ async def get_similar_articles(
     # 5. Build full records from PostgreSQL
     matched_articles = await repo.get_articles_by_ids(match_ids)
     return matched_articles
+
+@router.get("/search", response_model=list[SimilarArticleResponse])
+async def search_articles_by_text(
+    query: str,
+    k: int = 5,
+    db: AsyncSession = Depends(get_db)
+):
+    """Executes a semantic vector search across all indexed articles using SentenceTransformers."""
+    repo = ArticleRepository(db)
+    query_vector = embedding_model.encode(query).tolist()
+    raw_matches = search_similar_articles(query_vector=query_vector, limit=k)
+    match_ids = [point.id for point in raw_matches][:k]
+    return await repo.get_articles_by_ids(match_ids)
