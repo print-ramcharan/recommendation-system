@@ -159,6 +159,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     searchResultsList.innerHTML = `<div style="padding: 1rem; color: var(--text-secondary);">Searching...</div>`;
     searchResultsSection.style.display = "block";
+    logActivity(`[Search] Querying Vector database for matches to: "${query}"...`);
 
     try {
       const response = await fetch(`/articles/search?query=${encodeURIComponent(query)}&k=5`);
@@ -166,6 +167,7 @@ document.addEventListener("DOMContentLoaded", () => {
         throw new Error(`Error: ${response.statusText}`);
       }
       const articles = await response.json();
+      logActivity(`[Search] Vector DB returned ${articles.length} semantically matching documents.`);
 
       if (articles.length === 0) {
         searchResultsList.innerHTML = `<div style="padding: 1rem; color: var(--text-secondary);">No matching articles found.</div>`;
@@ -181,12 +183,14 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     } catch (err) {
       searchResultsList.innerHTML = `<div style="padding: 1rem; color: #ef4444;">Search failed: ${err.message}</div>`;
+      logActivity(`[Search] Semantic search execution failed: ${err.message}`);
     }
   });
 });
 
 // Trigger Click Event
 async function triggerClickEvent(userId, articleId) {
+  window.logActivity(`[Event Engine] Dispatching user click event: user=${userId}, article=${articleId}...`);
   try {
     const response = await fetch(`/events`, {
       method: "POST",
@@ -198,11 +202,14 @@ async function triggerClickEvent(userId, articleId) {
       })
     });
     if (response.ok) {
+      window.logActivity(`[Event Engine] Click interaction logged successfully. Redis user profile embedding cache cleared.`);
       alert(`💥 Click event logged successfully for user ${userId} on article ${articleId}! Cache invalidated.`);
     } else {
+      window.logActivity(`[Event Engine] Failed to dispatch event to Kafka topic broker.`);
       alert(`❌ Failed to log click event.`);
     }
   } catch (err) {
+    window.logActivity(`[Event Engine] Event server connection failed: ${err.message}`);
     alert(`❌ Error logging click: ${err.message}`);
   }
 }
