@@ -186,6 +186,64 @@ document.addEventListener("DOMContentLoaded", () => {
       logActivity(`[Search] Semantic search execution failed: ${err.message}`);
     }
   });
+
+  // NCF Training Panel elements
+  const trainModelBtn = document.getElementById("trainModelBtn");
+  const trainStatusText = document.getElementById("trainStatusText");
+  const trainMessageText = document.getElementById("trainMessageText");
+  let pollInterval = null;
+
+  async function checkTrainingStatus() {
+    try {
+      const res = await fetch("/ml/status");
+      const status = await res.json();
+      
+      trainStatusText.textContent = status.status.toUpperCase();
+      trainMessageText.textContent = status.message || "";
+      
+      if (status.status === "training") {
+        trainStatusText.style.color = "var(--accent-purple)";
+        trainModelBtn.disabled = true;
+        trainModelBtn.textContent = "Training...";
+        if (!pollInterval) {
+          pollInterval = setInterval(checkTrainingStatus, 2000);
+        }
+      } else {
+        if (status.status === "failed") {
+          trainStatusText.style.color = "#ef4444";
+        } else {
+          trainStatusText.style.color = "var(--accent-green)";
+        }
+        trainModelBtn.disabled = false;
+        trainModelBtn.textContent = "Trigger Retraining";
+        if (pollInterval) {
+          clearInterval(pollInterval);
+          pollInterval = null;
+        }
+      }
+    } catch (err) {
+      console.error("Failed to check training status:", err);
+    }
+  }
+
+  trainModelBtn.addEventListener("click", async () => {
+    logActivity("[Model Retrainer] Triggering NCF model training pipeline...");
+    try {
+      const res = await fetch("/ml/train", { method: "POST" });
+      if (res.status === 409) {
+        alert("NCF model training is already in progress!");
+        return;
+      }
+      const data = await res.json();
+      logActivity(`[Model Retrainer] ${data.message}`);
+      checkTrainingStatus();
+    } catch (err) {
+      logActivity(`[Model Retrainer] Failed to trigger: ${err.message}`);
+    }
+  });
+
+  // Initial check
+  checkTrainingStatus();
 });
 
 // Trigger Click Event
