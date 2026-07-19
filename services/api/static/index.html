@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Recommendation Engine Simulator</title>
   <link rel="stylesheet" href="/static/css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div class="container">
@@ -41,6 +42,9 @@
               <span style="font-size: 0.75rem; color: var(--text-secondary); display: block;">Response Time</span>
               <span id="responseTimeVal" style="font-weight: 700; color: var(--accent-blue);">0.00ms</span>
             </div>
+          </div>
+          <div style="margin-top: 1rem; margin-bottom: 1.5rem; height: 180px; position: relative;">
+            <canvas id="latencyChart"></canvas>
           </div>
           <div id="recsList"></div>
         </div>
