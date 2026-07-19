@@ -12,6 +12,51 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchResultsSection = document.getElementById("searchResultsSection");
   const searchResultsList = document.getElementById("searchResultsList");
 
+  // Initialize Chart.js
+  const ctx = document.getElementById("latencyChart").getContext("2d");
+  const latencyData = [];
+  const latencyLabels = [];
+  
+  const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: latencyLabels,
+      datasets: [{
+        label: 'Latency (ms)',
+        data: latencyData,
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        borderWidth: 2,
+        tension: 0.4,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { display: false },
+        y: {
+          grid: { color: 'rgba(255, 255, 255, 0.05)' },
+          ticks: { color: '#9ca3af' }
+        }
+      },
+      plugins: {
+        legend: { display: false }
+      }
+    }
+  });
+
+  function addLatencyRecord(val) {
+    if (latencyData.length >= 10) {
+      latencyData.shift();
+      latencyLabels.shift();
+    }
+    latencyData.push(parseFloat(val));
+    latencyLabels.push(new Date().toLocaleTimeString());
+    chart.update();
+  }
+
   // Fetch Personalized Recommendations
   getRecsBtn.addEventListener("click", async () => {
     const userId = userIdInput.value.trim();
@@ -37,6 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
       experimentBadge.textContent = experimentGroup;
       experimentBadge.className = `badge badge-${experimentGroup}`;
       responseTimeVal.textContent = `${duration}ms`;
+      addLatencyRecord(duration);
 
       // Render Recommendations
       if (articles.length === 0) {
