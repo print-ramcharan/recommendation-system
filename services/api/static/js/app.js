@@ -12,6 +12,40 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchResultsSection = document.getElementById("searchResultsSection");
   const searchResultsList = document.getElementById("searchResultsList");
 
+  // Health Status Elements
+  const postgresStatus = document.getElementById("postgresStatus");
+  const redisStatus = document.getElementById("redisStatus");
+  const qdrantStatus = document.getElementById("qdrantStatus");
+
+  async function checkSystemHealth() {
+    try {
+      const response = await fetch("/health");
+      const data = await response.json();
+      const services = data.services || {};
+      
+      updateStatusBadge(postgresStatus, services.postgres);
+      updateStatusBadge(redisStatus, services.redis);
+      updateStatusBadge(qdrantStatus, services.qdrant);
+    } catch (err) {
+      updateStatusBadge(postgresStatus, "offline");
+      updateStatusBadge(redisStatus, "offline");
+      updateStatusBadge(qdrantStatus, "offline");
+    }
+  }
+
+  function updateStatusBadge(element, status) {
+    if (status === "online" || (status && status.startsWith("online"))) {
+      element.textContent = "ONLINE";
+      element.style.backgroundColor = "var(--accent-green)";
+    } else {
+      element.textContent = "OFFLINE";
+      element.style.backgroundColor = "#ef4444";
+    }
+  }
+
+  // Run on load
+  checkSystemHealth();
+
   // Initialize Chart.js
   const ctx = document.getElementById("latencyChart").getContext("2d");
   const latencyData = [];
