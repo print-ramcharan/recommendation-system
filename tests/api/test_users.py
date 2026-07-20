@@ -31,3 +31,15 @@ async def test_user_interests_get_and_put():
         async with SessionLocal() as session:
             await session.delete(await session.get(User, 7777))
             await session.commit()
+
+def test_user_interests_update_validation():
+    from services.api.schemas.user import UserInterestsUpdate
+    from pydantic import ValidationError
+    
+    # Test valid preferred_topics
+    update = UserInterestsUpdate(preferred_topics=["tech"])
+    assert update.preferred_topics == ["tech"]
+    
+    # Test empty topics raises validation error
+    with pytest.raises(ValidationError):
+        UserInterestsUpdate(preferred_topics=[])
