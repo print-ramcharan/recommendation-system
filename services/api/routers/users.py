@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from services.api.db.database import get_db
 from services.api.db.repository import UserRepository
 from services.api.schemas.user import UserInterestsUpdate
-from services.cache.redis_client import redis_client
+from services.cache.redis_client import delete_cached_user_embedding
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -34,10 +34,7 @@ async def update_user_interests(
         raise HTTPException(status_code=404, detail="User profile records not found.")
         
     # Invalidate Redis embedding cache
-    try:
-        redis_client.delete(f"user_embedding:{user_id}")
-    except Exception as e:
-        print(f"⚠️ Redis cache invalidation error: {e}")
+    delete_cached_user_embedding(user_id)
         
     return {
         "status": "success",
