@@ -34,3 +34,11 @@ def set_cached_user_embedding(user_id: int, vector: list[float], ttl: int = 3600
         )
     except Exception as e:
         print(f"⚠️ Redis Feature Store write error: {e}")
+
+def delete_cached_user_embedding(user_id: int):
+    """Purges a user's cached profile vector embedding from Redis."""
+    key = f"user_embedding:{user_id}"
+    try:
+        redis_client.delete(key)
+    except Exception as e:
+        print(f"⚠️ Redis Feature Store delete error: {e}")
