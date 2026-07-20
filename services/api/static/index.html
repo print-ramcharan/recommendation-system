@@ -30,42 +30,63 @@
     </div>
 
     <div class="grid">
-      <!-- Section: Recommendations Simulation -->
-      <div class="card">
-        <h2 class="card-title">👤 Personalized Simulator</h2>
-        <div class="form-group">
-          <label for="userIdInput">Simulate User ID</label>
-          <input type="number" id="userIdInput" value="8888" placeholder="Enter user ID (e.g. 8888)">
-        </div>
-        <div class="form-group">
-          <label for="limitSelect">k Recommendations</label>
-          <select id="limitSelect">
-            <option value="3">3</option>
-            <option value="5" selected>5</option>
-            <option value="10">10</option>
-          </select>
-        </div>
-        <button id="getRecsBtn">Generate Recommendations</button>
+      <div>
+        <!-- Section: Recommendations Simulation -->
+        <div class="card">
+          <h2 class="card-title">👤 Personalized Simulator</h2>
+          <div class="form-group">
+            <label for="userIdInput">Simulate User ID</label>
+            <input type="number" id="userIdInput" value="8888" placeholder="Enter user ID (e.g. 8888)">
+          </div>
+          <div class="form-group">
+            <label for="limitSelect">k Recommendations</label>
+            <select id="limitSelect">
+              <option value="3">3</option>
+              <option value="5" selected>5</option>
+              <option value="10">10</option>
+            </select>
+          </div>
+          <button id="getRecsBtn">Generate Recommendations</button>
 
-        <div id="recStats" style="margin-top: 1.5rem; display: none;">
-          <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
-            <div>
-              <span style="font-size: 0.75rem; color: var(--text-secondary); display: block;">Experiment Group</span>
-              <span id="experimentBadge" class="badge">GROUP A</span>
+          <div id="recStats" style="margin-top: 1.5rem; display: none;">
+            <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+              <div>
+                <span style="font-size: 0.75rem; color: var(--text-secondary); display: block;">Experiment Group</span>
+                <span id="experimentBadge" class="badge">GROUP A</span>
+              </div>
+              <div>
+                <span style="font-size: 0.75rem; color: var(--text-secondary); display: block;">Response Time</span>
+                <span id="responseTimeVal" style="font-weight: 700; color: var(--accent-blue);">0.00ms</span>
+              </div>
             </div>
-            <div>
-              <span style="font-size: 0.75rem; color: var(--text-secondary); display: block;">Response Time</span>
-              <span id="responseTimeVal" style="font-weight: 700; color: var(--accent-blue);">0.00ms</span>
+            <div style="margin-top: 1rem; margin-bottom: 1.5rem; height: 180px; position: relative;">
+              <canvas id="latencyChart"></canvas>
             </div>
+            <div id="recsList"></div>
           </div>
-          <div style="margin-top: 1rem; margin-bottom: 1.5rem; height: 180px; position: relative;">
-            <canvas id="latencyChart"></canvas>
+        </div>
+
+        <!-- Section: User Profile & Interests Editor -->
+        <div class="card" style="margin-top: 2rem;">
+          <h2 class="card-title">✍️ User Profile Interests Editor</h2>
+          <div class="form-group">
+            <label for="profileUserIdInput">Active User ID</label>
+            <input type="number" id="profileUserIdInput" value="8888" placeholder="User ID to edit">
           </div>
-          <div id="recsList"></div>
+          <div class="form-group">
+            <label>Current Topics Interests</label>
+            <p id="currentInterestsText" style="font-size: 0.9rem; font-weight: 700; color: var(--accent-blue); margin: 0.5rem 0;">None loaded</p>
+          </div>
+          <div class="form-group">
+            <label for="newInterestsInput">Preferred Topics (Comma-separated)</label>
+            <input type="text" id="newInterestsInput" placeholder="e.g. tech, sports, medicine">
+          </div>
+          <button id="updateInterestsBtn">Save User Interests</button>
         </div>
       </div>
 
-      <!-- Section: Semantic Search -->
+      <div>
+        <!-- Section: Semantic Search -->
       <div class="card">
         <h2 class="card-title">🔍 Semantic Vector Search</h2>
         <div class="form-group">

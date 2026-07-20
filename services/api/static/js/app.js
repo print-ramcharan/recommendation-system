@@ -12,6 +12,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchResultsSection = document.getElementById("searchResultsSection");
   const searchResultsList = document.getElementById("searchResultsList");
 
+  // Profile Interests Elements
+  const profileUserIdInput = document.getElementById("profileUserIdInput");
+  const currentInterestsText = document.getElementById("currentInterestsText");
+  const newInterestsInput = document.getElementById("newInterestsInput");
+  const updateInterestsBtn = document.getElementById("updateInterestsBtn");
+
   // Health Status Elements
   const postgresStatus = document.getElementById("postgresStatus");
   const redisStatus = document.getElementById("redisStatus");
@@ -57,6 +63,50 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Run on load
   checkSystemHealth();
+
+  async function loadUserInterests() {
+    const userId = profileUserIdInput.value.trim();
+    if (!userId) return;
+    try {
+      const response = await fetch(`/users/${userId}/interests`);
+      if (!response.ok) throw new Error("Not found");
+      const data = await response.json();
+      currentInterestsText.textContent = data.preferred_topics.join(", ") || "None";
+    } catch (err) {
+      currentInterestsText.textContent = "Error loading / Not found";
+    }
+  }
+
+  profileUserIdInput.addEventListener("change", loadUserInterests);
+  profileUserIdInput.addEventListener("keyup", loadUserInterests);
+
+  updateInterestsBtn.addEventListener("click", async () => {
+    const userId = profileUserIdInput.value.trim();
+    const topicsRaw = newInterestsInput.value.trim();
+    if (!userId || !topicsRaw) return;
+    
+    const topics = topicsRaw.split(",").map(t => t.trim()).filter(t => t.length > 0);
+    logActivity(`[Profile Editor] Updating user ${userId} preferred topics to: ${topics.join(", ")}...`);
+    
+    try {
+      const res = await fetch(`/users/${userId}/interests`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ preferred_topics: topics })
+      });
+      if (!res.ok) throw new Error(`Status: ${res.statusText}`);
+      const data = await res.json();
+      logActivity(`[Profile Editor] User interests updated successfully! Redis cached user embeddings invalidated.`);
+      loadUserInterests();
+      alert("💥 User interests saved successfully! Cache cleared.");
+    } catch (err) {
+      logActivity(`[Profile Editor] Update failed: ${err.message}`);
+      alert(`❌ Failed to update interests: ${err.message}`);
+    }
+  });
+
+  // Call loadUserInterests on load
+  loadUserInterests();
 
   // Initialize Chart.js
   const ctx = document.getElementById("latencyChart").getContext("2d");

@@ -26,6 +26,16 @@ class UserRepository:
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
 
+    async def update_interests(self, user_id: int, interests: dict) -> User | None:
+        """Updates interests JSON field for a user."""
+        user = await self.get_by_id(user_id)
+        if not user:
+            return None
+        user.interests = interests
+        await self.db.commit()
+        await self.db.refresh(user)
+        return user
+
 
 class ArticleRepository:
     def __init__(self, db: AsyncSession):
