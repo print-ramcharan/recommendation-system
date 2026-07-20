@@ -12,7 +12,12 @@ The Recommendation Engine Simulator at `/dashboard` serves as an interactive pla
   * **Group C**: Neural Collaborative Filtering (NCF) deep model ranking.
 * **Latency Chart**: Utilizes Chart.js to render a running line chart tracking the past 10 API requests' response duration in milliseconds.
 
-### 2. Semantic Search Panel
+### 2. User Profile Interests Editor
+* **Interests Lookup**: Fetches and displays the user's current preferred topics directly from PostgreSQL on User ID changes.
+* **Interests Writer**: Allows updating preferred topics with a comma-separated list.
+* **Cache Invalidation**: Automatically purges pre-computed user vectors from the Redis Feature Store, forcing the API to compute updated embeddings on the next personalized simulator request.
+
+### 3. Semantic Search Panel
 * **Natural Language Queries**: Leverages the SentenceTransformer model to perform ad-hoc vector similarity query retrievals directly on Qdrant DB points.
 
 ### 3. NCF Model Retrainer
