@@ -99,6 +99,28 @@
           <div id="searchResultsList"></div>
         </div>
       </div>
+
+      <!-- Section: Category CTR & System Metrics -->
+      <div class="card" style="margin-top: 2rem;">
+        <h2 class="card-title">📊 Category Interaction CTR & Metrics</h2>
+        <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+          <div style="flex: 1; text-align: center; background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 8px;">
+            <span style="font-size: 0.75rem; color: var(--text-secondary); display: block;">Total Clicks</span>
+            <span id="statTotalClicks" style="font-size: 1.1rem; font-weight: 800; color: var(--accent-blue);">0</span>
+          </div>
+          <div style="flex: 1; text-align: center; background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 8px;">
+            <span style="font-size: 0.75rem; color: var(--text-secondary); display: block;">Users</span>
+            <span id="statTotalUsers" style="font-size: 1.1rem; font-weight: 800; color: var(--accent-purple);">0</span>
+          </div>
+          <div style="flex: 1; text-align: center; background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 8px;">
+            <span style="font-size: 0.75rem; color: var(--text-secondary); display: block;">Articles</span>
+            <span id="statTotalArticles" style="font-size: 1.1rem; font-weight: 800; color: var(--accent-green);">0</span>
+          </div>
+        </div>
+        <div style="height: 180px; position: relative;">
+          <canvas id="categoryChart"></canvas>
+        </div>
+      </div>
     </div>
 
     <div class="grid" style="margin-top: 2rem;">
