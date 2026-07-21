@@ -24,3 +24,8 @@ The Recommendation Engine Simulator at `/dashboard` serves as an interactive pla
 * **Training Trigger**: Dispatches training jobs asynchronously using FastAPI BackgroundTasks.
 * **Progress Poller**: Polls status from `/ml/status` dynamically detailing the current epoch number and loss value updates.
 * **Status Flags**: Displays `IDLE`, `TRAINING`, and `FAILED` states.
+
+### 4. Category Interaction CTR & Metrics
+* **Total Counts**: Live counters for total recorded click events, registered user profiles, and published articles.
+* **Doughnut Distribution Chart**: Uses Chart.js to visually display the percentage click share across article categories.
+* **Real-time Synchronization**: Re-fetches `/analytics/summary` automatically upon dispatching new click interaction events.
