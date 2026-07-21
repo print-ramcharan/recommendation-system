@@ -20,6 +20,7 @@ The system includes a pre-configured developer dashboard accessible at `http://l
 * **Personalized Simulator**: Enter a user ID to retrieve Top-K recommendations, view assigned A/B test groups, and inspect live query response times plotted in a dynamic line chart.
 * **Semantic Search Panel**: Query Qdrant vector database via natural language terms.
 * **Retraining Orchestration**: Trigger Neural Collaborative Filtering (NCF) retraining pipeline in background worker threads and watch epoch loss progress indicators.
+* **Category CTR Analytics**: View real-time category click distribution share via an interactive Chart.js doughnut chart alongside total interaction counters.
 
 ---
 

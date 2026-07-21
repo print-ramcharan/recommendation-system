@@ -18,6 +18,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const newInterestsInput = document.getElementById("newInterestsInput");
   const updateInterestsBtn = document.getElementById("updateInterestsBtn");
 
+  // Analytics Elements
+  const statTotalClicks = document.getElementById("statTotalClicks");
+  const statTotalUsers = document.getElementById("statTotalUsers");
+  const statTotalArticles = document.getElementById("statTotalArticles");
+
   // Health Status Elements
   const postgresStatus = document.getElementById("postgresStatus");
   const redisStatus = document.getElementById("redisStatus");
@@ -107,6 +112,57 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Call loadUserInterests on load
   loadUserInterests();
+
+  // Category CTR Doughnut Chart
+  const categoryCtx = document.getElementById("categoryChart").getContext("2d");
+  const categoryChart = new Chart(categoryCtx, {
+    type: 'doughnut',
+    data: {
+      labels: [],
+      datasets: [{
+        data: [],
+        backgroundColor: ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: { color: '#9ca3af', font: { size: 10 } }
+        }
+      }
+    }
+  });
+
+  async function loadAnalyticsSummary() {
+    try {
+      const res = await fetch("/analytics/summary");
+      if (!res.ok) return;
+      const data = await res.json();
+      
+      statTotalClicks.textContent = data.total_clicks;
+      statTotalUsers.textContent = data.total_users;
+      statTotalArticles.textContent = data.total_articles;
+      
+      const labels = (data.category_breakdown || []).map(item => item.category);
+      const counts = (data.category_breakdown || []).map(item => item.click_count);
+      
+      categoryChart.data.labels = labels;
+      categoryChart.data.datasets[0].data = counts;
+      categoryChart.update();
+    } catch (err) {
+      console.error("Failed to load analytics summary:", err);
+    }
+  }
+
+  // Expose loadAnalyticsSummary globally for refresh triggers
+  window.loadAnalyticsSummary = loadAnalyticsSummary;
+
+  // Run analytics load on init
+  loadAnalyticsSummary();
 
   // Initialize Chart.js
   const ctx = document.getElementById("latencyChart").getContext("2d");
@@ -311,6 +367,7 @@ async function triggerClickEvent(userId, articleId) {
     });
     if (response.ok) {
       window.logActivity(`[Event Engine] Click interaction logged successfully. Redis user profile embedding cache cleared.`);
+      if (window.loadAnalyticsSummary) window.loadAnalyticsSummary();
       alert(`💥 Click event logged successfully for user ${userId} on article ${articleId}! Cache invalidated.`);
     } else {
       window.logActivity(`[Event Engine] Failed to dispatch event to Kafka topic broker.`);

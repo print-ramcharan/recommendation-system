@@ -90,3 +90,39 @@ class RecommendationService:
         }
 
         return list(unique_articles.values())[:k]
+
+
+class AnalyticsService:
+    def __init__(
+        self,
+        user_repo: UserRepository,
+        article_repo: ArticleRepository,
+        event_repo: EventRepository
+    ):
+        self.user_repo = user_repo
+        self.article_repo = article_repo
+        self.event_repo = event_repo
+
+    async def get_summary_analytics(self) -> dict:
+        """Aggregates system-wide analytics summary metrics and category CTR breakdown."""
+        total_clicks = await self.event_repo.get_total_clicks_count()
+        total_users = await self.user_repo.get_total_users_count()
+        total_articles = await self.article_repo.get_total_articles_count()
+        
+        breakdown_tuples = await self.event_repo.get_category_click_breakdown()
+        
+        category_breakdown = []
+        for cat, cnt in breakdown_tuples:
+            pct = (cnt / total_clicks * 100.0) if total_clicks > 0 else 0.0
+            category_breakdown.append({
+                "category": cat,
+                "click_count": cnt,
+                "percentage": round(pct, 2)
+            })
+            
+        return {
+            "total_clicks": total_clicks,
+            "total_users": total_users,
+            "total_articles": total_articles,
+            "category_breakdown": category_breakdown
+        }

@@ -1,6 +1,6 @@
 
 from services.api.models.event import Event 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from services.api.models.article import Article
 from services.api.models.user import User
@@ -36,6 +36,12 @@ class UserRepository:
         await self.db.refresh(user)
         return user
 
+    async def get_total_users_count(self) -> int:
+        """Returns total count of user records in database."""
+        stmt = select(func.count(User.user_id))
+        result = await self.db.execute(stmt)
+        return result.scalar() or 0
+
 
 class ArticleRepository:
     def __init__(self, db: AsyncSession):
@@ -66,6 +72,12 @@ class ArticleRepository:
         stmt = select(Article).where(Article.category == category).limit(limit)
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
+
+    async def get_total_articles_count(self) -> int:
+        """Returns total count of article records in database."""
+        stmt = select(func.count(Article.article_id))
+        result = await self.db.execute(stmt)
+        return result.scalar() or 0
 
     async def search_by_tags(self, tags: list[str]) -> list[Article]:
         stmt = select(Article)
@@ -114,7 +126,6 @@ class EventRepository:
 
     async def get_popular_articles(self, limit: int = 10) -> list[int]:
         """Queries the database for most frequently clicked articles."""
-        from sqlalchemy import func
         stmt = (
             select(Event.article_id)
             .where(Event.event_type == "click")
@@ -124,3 +135,21 @@ class EventRepository:
         )
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
+
+    async def get_total_clicks_count(self) -> int:
+        """Returns total number of click interactions recorded across system."""
+        stmt = select(func.count(Event.event_id)).where(Event.event_type == "click")
+        result = await self.db.execute(stmt)
+        return result.scalar() or 0
+
+    async def get_category_click_breakdown(self) -> list[tuple[str, int]]:
+        """Queries category distribution of clicks joined with Article model."""
+        stmt = (
+            select(Article.category, func.count(Event.event_id))
+            .join(Article, Event.article_id == Article.article_id)
+            .where(Event.event_type == "click")
+            .group_by(Article.category)
+            .order_by(func.count(Event.event_id).desc())
+        )
+        result = await self.db.execute(stmt)
+        return list(result.all())
