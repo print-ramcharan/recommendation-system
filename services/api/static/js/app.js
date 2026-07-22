@@ -350,6 +350,50 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initial check
   checkTrainingStatus();
+
+  // Server-Sent Events (SSE) Live Feed connection
+  const sseNotificationFeed = document.getElementById("sseNotificationFeed");
+  
+  try {
+    const eventSource = new EventSource("/notifications/stream");
+    
+    eventSource.onopen = () => {
+      logActivity("[SSE Client] Connected to Server-Sent Events notification stream.");
+    };
+    
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      logActivity(`[SSE Stream] Live event received: type=${data.event_type}, user=${data.user_id}, article=${data.article_id}`);
+      
+      // Update UI Live Feed list
+      const timestamp = new Date().toLocaleTimeString();
+      const feedItem = document.createElement("div");
+      feedItem.style.padding = "0.5rem";
+      feedItem.style.borderBottom = "1px solid rgba(255,255,255,0.05)";
+      feedItem.style.fontSize = "0.85rem";
+      feedItem.style.color = "var(--text-primary)";
+      feedItem.innerHTML = `📡 <strong>[${timestamp}] Live click:</strong> User ${data.user_id} clicked Article ${data.article_id}`;
+      
+      // Remove first placeholder text if exists
+      if (sseNotificationFeed.children.length === 1 && sseNotificationFeed.children[0].textContent.includes("Listening")) {
+        sseNotificationFeed.innerHTML = "";
+      }
+      
+      sseNotificationFeed.appendChild(feedItem);
+      sseNotificationFeed.scrollTop = sseNotificationFeed.scrollHeight;
+      
+      // Re-trigger analytics reload dynamically
+      if (window.loadAnalyticsSummary) {
+        window.loadAnalyticsSummary();
+      }
+    };
+    
+    eventSource.onerror = (err) => {
+      logActivity("[SSE Client] Stream connection disconnected or experiencing network retry lag.");
+    };
+  } catch (e) {
+    console.error("SSE initialization failed:", e);
+  }
 });
 
 // Trigger Click Event
