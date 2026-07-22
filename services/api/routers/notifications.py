@@ -31,8 +31,12 @@ async def event_generator(request: Request, queue: asyncio.Queue):
             # Yield streamed messages to the client
             if await request.is_disconnected():
                 break
-            message = await queue.get()
-            yield message
+            try:
+                message = await asyncio.wait_for(queue.get(), timeout=1.0)
+                yield message
+            except asyncio.TimeoutError:
+                # Keep-alive heartbeat comment to verify active connection status
+                yield ": keep-alive\n\n"
     except asyncio.CancelledError:
         pass
     finally:
