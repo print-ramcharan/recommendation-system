@@ -139,6 +139,13 @@
     </div>
 
     <div class="card" style="margin-top: 2rem;">
+      <h2 class="card-title">🔔 Server-Sent Events (SSE) Live Click Feed</h2>
+      <div id="sseNotificationFeed" style="display: flex; flex-direction: column-reverse; gap: 0.5rem; max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+        <p style="color: var(--text-secondary); margin: 0; font-size: 0.9rem;">Listening for live events streamed from /notifications/stream...</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 2rem;">
       <h2 class="card-title">📟 Real-time Activity Console</h2>
       <div id="activityLog" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; font-family: monospace; font-size: 0.85rem; height: 150px; overflow-y: auto; color: var(--accent-green);">
         [System] Dashboard initialized. Waiting for actions...
