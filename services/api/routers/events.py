@@ -26,4 +26,14 @@ async def create_event(
     service = EventService(event_repo=event_repo)
 
     saved_event = await service.ingest_user_event(payload)
+    
+    # Broadcast to Server-Sent Events subscribers
+    from services.api.routers.notifications import sse_manager
+    sse_manager.broadcast({
+        "event_type": saved_event.event_type,
+        "user_id": saved_event.user_id,
+        "article_id": saved_event.article_id,
+        "timestamp": str(saved_event.timestamp)
+    })
+    
     return EventResponse.model_validate(saved_event)

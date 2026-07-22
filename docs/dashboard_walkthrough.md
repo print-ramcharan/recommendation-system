@@ -29,3 +29,8 @@ The Recommendation Engine Simulator at `/dashboard` serves as an interactive pla
 * **Total Counts**: Live counters for total recorded click events, registered user profiles, and published articles.
 * **Doughnut Distribution Chart**: Uses Chart.js to visually display the percentage click share across article categories.
 * **Real-time Synchronization**: Re-fetches `/analytics/summary` automatically upon dispatching new click interaction events.
+
+### 5. Server-Sent Events (SSE) Live Click Feed
+* **Live Broadcasting**: Listens to `/notifications/stream` for real-time EventSource signals.
+* **Feed Updates**: Dynamically constructs feed elements for incoming user clicks with active timestamp attributes.
+* **Automatic Stat Sync**: Directs other browser simulator sessions to refresh their analytics metrics automatically when a click event is broadcasted.
