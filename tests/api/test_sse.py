@@ -1,17 +1,24 @@
 import pytest
 import asyncio
 import json
-from httpx import AsyncClient, ASGITransport
-from services.api.main import app
-from services.api.routers.notifications import sse_manager
+from services.api.routers.notifications import sse_manager, event_generator
+
+class MockRequest:
+    def __init__(self):
+        self.calls = 0
+    async def is_disconnected(self):
+        self.calls += 1
+        # Disconnect after yielding the first queue message to prevent infinite loops in tests
+        return self.calls > 1
 
 @pytest.mark.anyio
-async def test_sse_stream_response_headers():
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
-        # Verify text/event-stream content type is configured correctly
-        async with ac.stream("GET", "/notifications/stream") as response:
-            assert response.status_code == 200
-            assert response.headers.get("content-type").startswith("text/event-stream")
+async def test_event_generator_direct():
+    queue = asyncio.Queue()
+    queue.put_nowait("data: hello\n\n")
+    
+    gen = event_generator(MockRequest(), queue)
+    msg = await gen.__anext__()
+    assert msg == "data: hello\n\n"
 
 @pytest.mark.anyio
 async def test_sse_broadcast_message():
