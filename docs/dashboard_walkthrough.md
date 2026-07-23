@@ -34,3 +34,8 @@ The Recommendation Engine Simulator at `/dashboard` serves as an interactive pla
 * **Live Broadcasting**: Listens to `/notifications/stream` for real-time EventSource signals.
 * **Feed Updates**: Dynamically constructs feed elements for incoming user clicks with active timestamp attributes.
 * **Automatic Stat Sync**: Directs other browser simulator sessions to refresh their analytics metrics automatically when a click event is broadcasted.
+
+### 6. Latency SLA Performance Metrics
+* **Percentile Aggregations**: Queries `/profiling/stats` to retrieve p95, p99, and average response times in milliseconds.
+* **Database Samples**: Dynamically tracks execution samples across the recommendation engine pipeline to compute true SLA compliance benchmarks.
+* **Auto-refresh Cycle**: Re-fetches the latest statistics automatically upon completion of recommendation queries.

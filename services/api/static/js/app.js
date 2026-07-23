@@ -23,6 +23,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const statTotalUsers = document.getElementById("statTotalUsers");
   const statTotalArticles = document.getElementById("statTotalArticles");
 
+  // SLA Elements
+  const slaAvgMs = document.getElementById("slaAvgMs");
+  const slaP95Ms = document.getElementById("slaP95Ms");
+  const slaP99Ms = document.getElementById("slaP99Ms");
+  const slaTotalSamples = document.getElementById("slaTotalSamples");
+
   // Health Status Elements
   const postgresStatus = document.getElementById("postgresStatus");
   const redisStatus = document.getElementById("redisStatus");
@@ -164,6 +170,23 @@ document.addEventListener("DOMContentLoaded", () => {
   // Run analytics load on init
   loadAnalyticsSummary();
 
+  async function loadLatencySlaMetrics() {
+    try {
+      const res = await fetch("/profiling/stats?route=/recommendations/personalized");
+      if (!res.ok) return;
+      const data = await res.json();
+      slaAvgMs.textContent = data.avg_ms.toFixed(1);
+      slaP95Ms.textContent = data.p95_ms.toFixed(1);
+      slaP99Ms.textContent = data.p99_ms.toFixed(1);
+      slaTotalSamples.textContent = data.total_samples;
+    } catch (err) {
+      console.error("Failed to load latency SLA metrics:", err);
+    }
+  }
+
+  window.loadLatencySlaMetrics = loadLatencySlaMetrics;
+  loadLatencySlaMetrics();
+
   // Initialize Chart.js
   const ctx = document.getElementById("latencyChart").getContext("2d");
   const latencyData = [];
@@ -236,6 +259,7 @@ document.addEventListener("DOMContentLoaded", () => {
       experimentBadge.className = `badge badge-${experimentGroup}`;
       responseTimeVal.textContent = `${duration}ms`;
       addLatencyRecord(duration);
+      if (window.loadLatencySlaMetrics) window.loadLatencySlaMetrics();
       logActivity(`[Simulator] Mapped ${articles.length} recommendations in ${duration}ms via ${experimentGroup.toUpperCase()}`);
 
       // Render Recommendations

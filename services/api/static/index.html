@@ -139,6 +139,27 @@
     </div>
 
     <div class="card" style="margin-top: 2rem;">
+      <h2 class="card-title">⏱️ Latency SLA Performance Metrics</h2>
+      <div style="display: flex; gap: 1.5rem; justify-content: space-around; text-align: center;">
+        <div style="flex: 1; background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 8px;">
+          <span style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 0.5rem;">Average Latency</span>
+          <span id="slaAvgMs" style="font-size: 1.8rem; font-weight: 800; color: var(--accent-green);">0.0</span> <span style="font-size: 0.8rem; color: var(--text-secondary);">ms</span>
+        </div>
+        <div style="flex: 1; background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 8px; border: 1px solid rgba(139, 92, 246, 0.2);">
+          <span style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 0.5rem;">95th Percentile (p95)</span>
+          <span id="slaP95Ms" style="font-size: 1.8rem; font-weight: 800; color: var(--accent-purple);">0.0</span> <span style="font-size: 0.8rem; color: var(--text-secondary);">ms</span>
+        </div>
+        <div style="flex: 1; background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 8px; border: 1px solid rgba(245, 158, 11, 0.2);">
+          <span style="font-size: 0.8rem; color: var(--text-secondary); display: block; margin-bottom: 0.5rem;">99th Percentile (p99)</span>
+          <span id="slaP99Ms" style="font-size: 1.8rem; font-weight: 800; color: var(--accent-blue);">0.0</span> <span style="font-size: 0.8rem; color: var(--text-secondary);">ms</span>
+        </div>
+      </div>
+      <div style="margin-top: 1rem; text-align: right;">
+        <span style="font-size: 0.75rem; color: var(--text-secondary);">Based on <span id="slaTotalSamples" style="font-weight: 700;">0</span> total recommendation profiling queries.</span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 2rem;">
       <h2 class="card-title">🔔 Server-Sent Events (SSE) Live Click Feed</h2>
       <div id="sseNotificationFeed" style="display: flex; flex-direction: column-reverse; gap: 0.5rem; max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
         <p style="color: var(--text-secondary); margin: 0; font-size: 0.9rem;">Listening for live events streamed from /notifications/stream...</p>
