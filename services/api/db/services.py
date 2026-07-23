@@ -1,6 +1,7 @@
 from services.api.models.event import Event
 from services.api.models.article import Article
-from services.api.db.repository import UserRepository, ArticleRepository, EventRepository
+from services.api.db.repository import UserRepository, ArticleRepository, EventRepository, LatencyRepository
+from services.api.models.latency import LatencyProfile
 from services.api.schemas.event import EventCreate
 from services.streaming.producer import publish_event
 
@@ -125,4 +126,45 @@ class AnalyticsService:
             "total_users": total_users,
             "total_articles": total_articles,
             "category_breakdown": category_breakdown
+        }
+
+
+class ProfilingService:
+    def __init__(self, latency_repo: LatencyRepository):
+        self.latency_repo = latency_repo
+
+    async def record_sample(self, route: str, duration_ms: float) -> LatencyProfile:
+        """Records an individual execution duration sample."""
+        record = LatencyProfile(route=route, duration_ms=duration_ms)
+        return await self.latency_repo.create_latency_record(record)
+
+    async def get_percentile_latencies(self, route: str) -> dict:
+        """Calculates SLA percentage latencies (p95, p99)."""
+        durations = await self.latency_repo.get_all_latencies_by_route(route)
+        if not durations:
+            return {
+                "route": route,
+                "avg_ms": 0.0,
+                "min_ms": 0.0,
+                "max_ms": 0.0,
+                "p95_ms": 0.0,
+                "p99_ms": 0.0,
+                "total_samples": 0
+            }
+
+        sorted_durs = sorted(durations)
+        total = len(sorted_durs)
+        
+        def percentile(p):
+            idx = int(round(p * (total - 1)))
+            return sorted_durs[idx]
+
+        return {
+            "route": route,
+            "avg_ms": round(sum(sorted_durs) / total, 2),
+            "min_ms": round(sorted_durs[0], 2),
+            "max_ms": round(sorted_durs[-1], 2),
+            "p95_ms": round(percentile(0.95), 2),
+            "p99_ms": round(percentile(0.99), 2),
+            "total_samples": total
         }
