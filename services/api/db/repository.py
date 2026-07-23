@@ -4,6 +4,7 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from services.api.models.article import Article
 from services.api.models.user import User
+from services.api.models.latency import LatencyProfile
 
 
 class UserRepository:
@@ -153,3 +154,32 @@ class EventRepository:
         )
         result = await self.db.execute(stmt)
         return list(result.all())
+
+
+class LatencyRepository:
+    def __init__(self, db: AsyncSession):
+        self.db = db
+
+    async def create_latency_record(self, record: LatencyProfile) -> LatencyProfile:
+        """Persists a new latency sample entry to database."""
+        self.db.add(record)
+        await self.db.commit()
+        await self.db.refresh(record)
+        return record
+
+    async def get_latency_samples_by_route(self, route: str, limit: int = 100) -> list[LatencyProfile]:
+        """Queries recent latency samples registered for a specified endpoint path."""
+        stmt = (
+            select(LatencyProfile)
+            .where(LatencyProfile.route == route)
+            .order_by(LatencyProfile.timestamp.desc())
+            .limit(limit)
+        )
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
+
+    async def get_all_latencies_by_route(self, route: str) -> list[float]:
+        """Queries durations for statistical metrics calculation."""
+        stmt = select(LatencyProfile.duration_ms).where(LatencyProfile.route == route)
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
