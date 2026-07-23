@@ -1,6 +1,6 @@
 import datetime
 from sqlalchemy import Column, Integer, String, Float, DateTime
-from services.api.db.database import Base
+from services.api.models.base import Base
 
 class LatencyProfile(Base):
     __tablename__ = "latency_profiles"
