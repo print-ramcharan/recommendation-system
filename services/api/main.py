@@ -15,6 +15,7 @@ from services.api.routers.ml import router as ml_router
 from services.api.routers.users import router as users_router
 from services.api.routers.analytics import router as analytics_router
 from services.api.routers.notifications import router as notifications_router
+from services.api.routers.profiling import router as profiling_router
 from prometheus_fastapi_instrumentator import Instrumentator
 
 logging.basicConfig(level=logging.INFO)
@@ -45,6 +46,7 @@ app.include_router(ml_router)
 app.include_router(users_router)
 app.include_router(analytics_router)
 app.include_router(notifications_router)
+app.include_router(profiling_router)
 
 @app.get("/health")
 async def health(db: AsyncSession = Depends(get_db)):
