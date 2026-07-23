@@ -5,7 +5,7 @@ from services.api.db.database import Base
 class LatencyProfile(Base):
     __tablename__ = "latency_profiles"
 
-    id = Column(Integer, primary key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
     route = Column(String, index=True, nullable=False)
     duration_ms = Column(Float, nullable=False)
     timestamp = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
