@@ -1,6 +1,6 @@
 from services.api.models.event import Event
 from services.api.models.article import Article
-from services.api.db.repository import UserRepository, ArticleRepository, EventRepository, LatencyRepository
+from services.api.db.repository import UserRepository, ArticleRepository, EventRepository, LatencyRepository, ExclusionRepository
 from services.api.models.latency import LatencyProfile
 from services.api.schemas.event import EventCreate
 from services.streaming.producer import publish_event
