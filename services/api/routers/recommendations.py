@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from services.api.db.database import get_db
 
 # Repositories & Services
-from services.api.db.repository import UserRepository, ArticleRepository, EventRepository
+from services.api.db.repository import UserRepository, ArticleRepository, EventRepository, ExclusionRepository
 from services.api.db.services import RecommendationService
 
 # Schemas
@@ -37,11 +37,13 @@ async def get_recommendations(
     user_repo = UserRepository(db)
     article_repo = ArticleRepository(db)
     event_repo = EventRepository(db)
+    exclusion_repo = ExclusionRepository(db)
 
     service = RecommendationService(
         user_repo=user_repo,
         article_repo=article_repo,
         event_repo=event_repo,
+        exclusion_repo=exclusion_repo
     )
 
     articles = await service.get_recommendations(
@@ -85,29 +87,32 @@ async def get_personalized_recommendations(
             
         response.headers["X-Experiment-Group"] = experiment_group
         
+        exclusion_repo = ExclusionRepository(db)
+        muted_categories = await exclusion_repo.get_user_exclusions(user_id)
+        muted_set = {cat.lower() for cat in muted_categories}
+
         if experiment_group == "group-b":
             print(f"📊 [A/B Test] Routing user {user_id} to Group B (Heuristic Popularity Baseline).")
             # Fetch popular clicked articles from Postgres
-            popular_ids = await event_repo.get_popular_articles(limit=k * 2)
+            popular_ids = await event_repo.get_popular_articles(limit=k * 3)
             # Filter out seen articles
             clicked_ids = await event_repo.get_user_clicked_articles(user_id)
             seen_set = set(clicked_ids)
-            filtered_ids = [aid for aid in popular_ids if aid not in seen_set][:k]
+            filtered_ids = [aid for aid in popular_ids if aid not in seen_set]
             
             # Fallback to category list if not enough popular clicked articles
-            if len(filtered_ids) < k:
-                # Fetch baseline articles matching first interest
+            if len(filtered_ids) < k * 2:
                 interests_dict = user.interests or {}
                 topics = interests_dict.get("preferred_topics", ["tech"]) if isinstance(interests_dict, dict) else ["tech"]
                 interest = topics[0] if topics else "tech"
-                category_articles = await article_repo.get_by_category(interest, limit=k * 2)
+                category_articles = await article_repo.get_by_category(interest, limit=k * 3)
                 for art in category_articles:
                     if art.article_id not in seen_set and art.article_id not in filtered_ids:
                         filtered_ids.append(art.article_id)
-                        if len(filtered_ids) == k:
-                            break
                             
-            result_articles = await article_repo.get_articles_by_ids(filtered_ids[:k])
+            candidates = await article_repo.get_articles_by_ids(filtered_ids)
+            filtered_candidates = [art for art in candidates if art.category.lower() not in muted_set]
+            result_articles = filtered_candidates[:k]
         else:
             # STAGE 0: Feature Store Read Look-up (O(1)) for Group A and Group C
             user_vector = get_cached_user_embedding(user_id)
@@ -135,6 +140,10 @@ async def get_personalized_recommendations(
             
             # Metadata Hydration from PostgreSQL
             candidate_articles = await article_repo.get_articles_by_ids(filtered_candidate_ids)
+            
+            # Filter out category exclusions
+            if muted_set:
+                candidate_articles = [art for art in candidate_articles if art.category.lower() not in muted_set]
 
             if experiment_group == "group-c":
                 print(f"📊 [A/B Test] Routing user {user_id} to Group C (NCF Neural Re-ranking).")
