@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from services.api.models.article import Article
 from services.api.models.user import User
 from services.api.models.latency import LatencyProfile
+from services.api.models.exclusion import UserExclusion
 
 
 class UserRepository:
@@ -181,5 +182,48 @@ class LatencyRepository:
     async def get_all_latencies_by_route(self, route: str) -> list[float]:
         """Queries durations for statistical metrics calculation."""
         stmt = select(LatencyProfile.duration_ms).where(LatencyProfile.route == route)
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
+
+
+class ExclusionRepository:
+    def __init__(self, db: AsyncSession):
+        self.db = db
+
+    async def create_exclusion(self, user_id: int, category: str) -> UserExclusion:
+        """Persists a new user category exclusion mapping in the database."""
+        category_clean = category.strip().lower()
+        
+        stmt = select(UserExclusion).where(
+            UserExclusion.user_id == user_id,
+            UserExclusion.category == category_clean
+        )
+        existing = (await self.db.execute(stmt)).scalar_one_or_none()
+        if existing:
+            return existing
+            
+        record = UserExclusion(user_id=user_id, category=category_clean)
+        self.db.add(record)
+        await self.db.commit()
+        await self.db.refresh(record)
+        return record
+
+    async def delete_exclusion(self, user_id: int, category: str) -> bool:
+        """Removes a user category exclusion mapping from the database."""
+        category_clean = category.strip().lower()
+        stmt = select(UserExclusion).where(
+            UserExclusion.user_id == user_id,
+            UserExclusion.category == category_clean
+        )
+        record = (await self.db.execute(stmt)).scalar_one_or_none()
+        if not record:
+            return False
+        await self.db.delete(record)
+        await self.db.commit()
+        return True
+
+    async def get_user_exclusions(self, user_id: int) -> list[str]:
+        """Queries active muted categories registered for a specific user."""
+        stmt = select(UserExclusion.category).where(UserExclusion.user_id == user_id)
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
