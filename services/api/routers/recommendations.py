@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from services.api.db.database import get_db
 
 # Repositories & Services
-from services.api.db.repository import UserRepository, ArticleRepository, EventRepository
+from services.api.db.repository import UserRepository, ArticleRepository, EventRepository, ExclusionRepository
 from services.api.db.services import RecommendationService
 
 # Schemas
@@ -37,11 +37,13 @@ async def get_recommendations(
     user_repo = UserRepository(db)
     article_repo = ArticleRepository(db)
     event_repo = EventRepository(db)
+    exclusion_repo = ExclusionRepository(db)
 
     service = RecommendationService(
         user_repo=user_repo,
         article_repo=article_repo,
         event_repo=event_repo,
+        exclusion_repo=exclusion_repo
     )
 
     articles = await service.get_recommendations(
