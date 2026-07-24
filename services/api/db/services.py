@@ -57,10 +57,12 @@ class RecommendationService:
         user_repo: UserRepository,
         article_repo: ArticleRepository,
         event_repo: EventRepository,
+        exclusion_repo: ExclusionRepository | None = None
     ):
         self.user_repo = user_repo
         self.article_repo = article_repo
         self.event_repo = event_repo
+        self.exclusion_repo = exclusion_repo
 
     async def get_recommendations(self, user_id: int, k: int = 10) -> list[Article]:
         user = await self.user_repo.get_by_id(user_id)
@@ -79,10 +81,15 @@ class RecommendationService:
             await self.event_repo.get_user_clicked_articles(user_id)
         )
 
+        excluded_categories = set()
+        if self.exclusion_repo:
+            muted = await self.exclusion_repo.get_user_exclusions(user_id)
+            excluded_categories = {cat.lower() for cat in muted}
+
         filtered = [
             article
             for article in recommended
-            if article.article_id not in clicked_ids
+            if article.article_id not in clicked_ids and article.category.lower() not in excluded_categories
         ]
 
         unique_articles = {
