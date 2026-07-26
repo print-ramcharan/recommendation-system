@@ -6,6 +6,7 @@ from services.api.models.article import Article
 from services.api.models.user import User
 from services.api.models.latency import LatencyProfile
 from services.api.models.exclusion import UserExclusion
+from services.api.models.evaluation import RecommendationMetric
 
 
 class UserRepository:
@@ -225,5 +226,28 @@ class ExclusionRepository:
     async def get_user_exclusions(self, user_id: int) -> list[str]:
         """Queries active muted categories registered for a specific user."""
         stmt = select(UserExclusion.category).where(UserExclusion.user_id == user_id)
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
+
+
+class EvaluationRepository:
+    def __init__(self, db: AsyncSession):
+        self.db = db
+
+    async def create_metrics_record(self, record: RecommendationMetric) -> RecommendationMetric:
+        """Persists recommendation quality evaluation metrics."""
+        self.db.add(record)
+        await self.db.commit()
+        await self.db.refresh(record)
+        return record
+
+    async def get_user_metrics(self, user_id: int, limit: int = 100) -> list[RecommendationMetric]:
+        """Queries historical evaluation metrics logged for a specific user."""
+        stmt = (
+            select(RecommendationMetric)
+            .where(RecommendationMetric.user_id == user_id)
+            .order_by(RecommendationMetric.timestamp.desc())
+            .limit(limit)
+        )
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
