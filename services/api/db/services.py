@@ -1,7 +1,9 @@
 from services.api.models.event import Event
 from services.api.models.article import Article
-from services.api.db.repository import UserRepository, ArticleRepository, EventRepository, LatencyRepository, ExclusionRepository
+import math
+from services.api.db.repository import UserRepository, ArticleRepository, EventRepository, LatencyRepository, ExclusionRepository, EvaluationRepository
 from services.api.models.latency import LatencyProfile
+from services.api.models.evaluation import RecommendationMetric
 from services.api.schemas.event import EventCreate
 from services.streaming.producer import publish_event
 
@@ -175,3 +177,59 @@ class ProfilingService:
             "p99_ms": round(percentile(0.99), 2),
             "total_samples": total
         }
+
+
+class EvaluationService:
+    def __init__(self, evaluation_repo: EvaluationRepository, event_repo: EventRepository):
+        self.evaluation_repo = evaluation_repo
+        self.event_repo = event_repo
+
+    def calculate_precision_recall_ndcg(self, recommended_ids: list[int], clicked_ids: list[int], k: int) -> tuple[float, float, float]:
+        """Calculates Precision@K, Recall@K, and NDCG@K metrics for binary relevance."""
+        rec_k = recommended_ids[:k]
+        if not rec_k:
+            return 0.0, 0.0, 0.0
+
+        clicked_set = set(clicked_ids)
+        if not clicked_set:
+            return 0.0, 0.0, 0.0
+
+        hits = [1 if rid in clicked_set else 0 for rid in rec_k]
+        hits_count = sum(hits)
+
+        precision = hits_count / k
+        recall = hits_count / len(clicked_set)
+
+        dcg = 0.0
+        for i, hit in enumerate(hits):
+            if hit == 1:
+                dcg += 1.0 / math.log2(i + 2)
+
+        idcg = 0.0
+        ideal_hits_count = min(k, len(clicked_set))
+        for i in range(ideal_hits_count):
+            idcg += 1.0 / math.log2(i + 2)
+
+        ndcg = (dcg / idcg) if idcg > 0.0 else 0.0
+        return precision, recall, ndcg
+
+    async def evaluate_user_recommendations(
+        self, user_id: int, recommended_ids: list[int], k: int = 10
+    ) -> RecommendationMetric:
+        """Computes evaluation quality metrics for a user profile and logs them in db."""
+        clicked_ids = await self.event_repo.get_user_clicked_articles(user_id)
+        
+        precision, recall, ndcg = self.calculate_precision_recall_ndcg(
+            recommended_ids=recommended_ids,
+            clicked_ids=clicked_ids,
+            k=k
+        )
+
+        record = RecommendationMetric(
+            user_id=user_id,
+            precision_at_k=round(precision, 4),
+            recall_at_k=round(recall, 4),
+            ndcg_at_k=round(ndcg, 4),
+            k=k
+        )
+        return await self.evaluation_repo.create_metrics_record(record)
