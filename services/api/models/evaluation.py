@@ -5,7 +5,7 @@ from services.api.models.base import Base
 class RecommendationMetric(Base):
     __tablename__ = "recommendation_metrics"
 
-    id = Column(Integer, primary key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
     user_id = Column(BigInteger, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True)
     precision_at_k = Column(Float, nullable=False)
     recall_at_k = Column(Float, nullable=False)
