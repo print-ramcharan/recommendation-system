@@ -12,6 +12,7 @@ from services.api.models.article import Article
 from services.api.models.event import Event
 from services.api.models.latency import LatencyProfile
 from services.api.models.exclusion import UserExclusion
+from services.api.models.evaluation import RecommendationMetric
 from services.api.db.database import DATABASE_URL
 
 # Alembic Config object
